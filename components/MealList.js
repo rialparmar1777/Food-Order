@@ -8,11 +8,13 @@ const MealListContainer = styled.section`
   padding: 4rem 2rem;
   max-width: 1200px;
   margin: 0 auto;
+  background: #f4f4f9;
+  border-radius: 15px;
 `;
 
 const MealGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 2rem;
   margin-top: 2rem;
 `;
@@ -21,32 +23,48 @@ const MealCard = styled(motion.div)`
   background: white;
   border-radius: 15px;
   overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s ease;
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 
   &:hover {
-    transform: translateY(-5px);
+    transform: translateY(-10px);
+    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
   }
 
   img {
     width: 100%;
-    height: 200px;
+    height: 220px;
     object-fit: cover;
+    border-bottom: 5px solid #ffd700;
+    transition: transform 0.3s ease;
+    
+    &:hover {
+      transform: scale(1.05);
+    }
   }
 `;
 
 const MealInfo = styled.div`
   padding: 1.5rem;
+  text-align: center;
 
   h3 {
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
     margin-bottom: 0.5rem;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: #ffd700;
+    }
   }
 
   p {
     color: #666;
     margin-bottom: 1rem;
+    line-height: 1.6;
+    font-size: 1rem;
   }
 `;
 
@@ -57,18 +75,21 @@ const PriceRow = styled.div`
   margin-top: 1rem;
 
   .price {
-    font-size: 1.25rem;
-    font-weight: 600;
+    font-size: 1.3rem;
+    font-weight: 700;
     color: #ffd700;
   }
 
   button {
     background: #ffd700;
     border: none;
-    padding: 0.5rem;
+    padding: 0.6rem;
     border-radius: 50%;
     cursor: pointer;
     transition: all 0.3s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
     &:hover {
       background: #e6c200;
@@ -83,10 +104,7 @@ const MealList = () => {
   useEffect(() => {
     const fetchMeals = async () => {
       try {
-        const response = await fetch('https://www.themealdb.com/api/json/v1/1/random.php');
-        const data = await response.json();
-        // Fetch multiple random meals
-        const mealPromises = Array(8).fill().map(() => 
+        const mealPromises = Array(8).fill().map(() =>
           fetch('https://www.themealdb.com/api/json/v1/1/random.php').then(res => res.json())
         );
         const mealResults = await Promise.all(mealPromises);
@@ -104,25 +122,6 @@ const MealList = () => {
     };
 
     fetchMeals();
-  }, []);
-
-  useEffect(() => {
-    // Scroll handling for "Order Now" button
-    const handleOrderNowClick = (e) => {
-      if (e.target.href && e.target.href.includes('#menu')) {
-        e.preventDefault();
-        const menuSection = document.getElementById('menu');
-        if (menuSection) {
-          menuSection.scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'start'
-          });
-        }
-      }
-    };
-
-    document.addEventListener('click', handleOrderNowClick);
-    return () => document.removeEventListener('click', handleOrderNowClick);
   }, []);
 
   return (
