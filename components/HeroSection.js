@@ -11,14 +11,14 @@ const NavbarContainer = styled.nav`
   left: 0;
   right: 0;
   z-index: 1000;
-  background: ${(props) =>
-    props.scrolled ? "rgba(255, 255, 255, 0.25)" : "rgba(255, 255, 255, 0.15)"};
-  backdrop-filter: blur(5px);
+  background: ${({ scrolled }) => (scrolled ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)')};
+  backdrop-filter: ${({ scrolled }) => (scrolled ? 'blur(12px) saturate(180%)' : 'blur(5px)')};
+  box-shadow: ${({ scrolled }) => (scrolled ? '0 8px 32px rgba(0, 0, 0, 0.15)' : 'none')};
+  border-bottom: ${({ scrolled }) => (scrolled ? '1px solid rgba(255, 255, 255, 0.3)' : 'none')};
   padding: 1rem 2rem;
-  transition: all 0.3s ease;
-  box-shadow: ${(props) =>
-    props.scrolled ? "0 4px 30px rgba(0, 0, 0, 0.1)" : "none"};
+  transition: all 0.4s ease-in-out;
 `;
+
 
 const Nav = styled.div`
   display: flex;
@@ -137,8 +137,8 @@ const HeroSection = () => {
 
   return (
     <>
-      <NavbarContainer scrolled={scrolled}>
-        <Nav>
+<NavbarContainer scrolled={scrolled ? 'true' : undefined}>
+<Nav>
           <h1 style={{ color: "#fff" }}>FOOD_ORDER</h1>
           <NavLinks>
             <a href="#home">Home</a>
