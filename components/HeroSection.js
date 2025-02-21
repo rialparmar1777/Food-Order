@@ -1,11 +1,11 @@
 "use client";
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { FaShoppingCart } from 'react-icons/fa';
-import { motion } from 'framer-motion';
-import { Carousel } from 'react-responsive-carousel';
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { FaShoppingCart } from "react-icons/fa";
+import { motion } from "framer-motion";
+import { Carousel } from "react-responsive-carousel";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
-import styled from 'styled-components';
+import styled from "styled-components";
 
 // Navbar Styled Components
 const NavbarContainer = styled.nav`
@@ -14,12 +14,16 @@ const NavbarContainer = styled.nav`
   left: 0;
   right: 0;
   z-index: 50;
-  background: ${({ scrolled }) => (scrolled ? 'rgba(255, 255, 255, 0.6)' : 'transparent')};
-  backdrop-filter: ${({ scrolled }) => (scrolled ? 'blur(12px)' : 'blur(5px)')};
-  box-shadow: ${({ scrolled }) => (scrolled ? '0 8px 32px rgba(0, 0, 0, 0.1)' : 'none')};
+  background: ${({ $scrolled }) =>
+    $scrolled ? "rgba(255, 255, 255, 0.6)" : "transparent"};
+  backdrop-filter: ${({ $scrolled }) =>
+    $scrolled ? "blur(12px)" : "blur(5px)"};
+  box-shadow: ${({ $scrolled }) =>
+    $scrolled ? "0 8px 32px rgba(0, 0, 0, 0.1)" : "none"};
   padding: 1rem 2rem;
   transition: all 0.3s ease-in-out;
-  border-bottom: ${({ scrolled }) => (scrolled ? '1px solid rgba(255, 255, 255, 0.2)' : 'none')};
+  border-bottom: ${({ $scrolled }) =>
+    $scrolled ? "1px solid rgba(255, 255, 255, 0.2)" : "none"};
 `;
 
 const NavbarContent = styled.div`
@@ -136,27 +140,36 @@ const HeroSection = () => {
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener("scroll", handleScroll);
+    const handleScroll = () => setScrolled(window.scrollY > 50);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   return (
     <>
       {/* Navbar */}
-      <NavbarContainer scrolled={scrolled}>
+      <NavbarContainer $scrolled={scrolled}>
         <NavbarContent>
-          <Link href="/" className="text-2xl font-bold text-yellow-400 drop-shadow-lg">
+          <Link
+            href="/"
+            className="text-2xl font-bold text-yellow-400 drop-shadow-lg"
+          >
             FOOD_ORDER
           </Link>
 
           <NavLinks>
-            <Link href="/" className="text-white hover:text-yellow-400">Home</Link>
-            <Link href="/menu" className="text-white hover:text-yellow-400">Menu</Link>
-            <Link href="/about" className="text-white hover:text-yellow-400">About</Link>
-            <Link href="/contact" className="text-white hover:text-yellow-400">Contact</Link>
+            <Link href="/" className="text-white hover:text-yellow-400">
+              Home
+            </Link>
+            <Link href="/menu" className="text-white hover:text-yellow-400">
+              Menu
+            </Link>
+            <Link href="/about" className="text-white hover:text-yellow-400">
+              About
+            </Link>
+            <Link href="/contact" className="text-white hover:text-yellow-400">
+              Contact
+            </Link>
           </NavLinks>
 
           <CartIcon>
@@ -169,7 +182,13 @@ const HeroSection = () => {
 
       {/* Carousel with Overlay */}
       <CarouselContainer>
-        <Carousel infiniteLoop autoPlay showStatus={false} showThumbs={false} interval={5000}>
+        <Carousel
+          infiniteLoop
+          autoPlay
+          showStatus={false}
+          showThumbs={false}
+          interval={5000}
+        >
           {["/slide1.jpg", "/slide2.jpg", "/slide3.jpg"].map((img, index) => (
             <div key={index}>
               <img src={img} alt={`Slide ${index + 1}`} />
@@ -185,8 +204,12 @@ const HeroSection = () => {
           <h2>Fresh & Delicious Food</h2>
           <p>Order your favorite meals and enjoy fast delivery.</p>
           <div className="cta">
-            <Link href="#menu" className="primary">Order Now</Link>
-            <Link href="#about" className="secondary">Learn More</Link>
+            <Link href="#menu" className="primary">
+              Order Now
+            </Link>
+            <Link href="#about" className="secondary">
+              Learn More
+            </Link>
           </div>
         </OverlayText>
       </CarouselContainer>
