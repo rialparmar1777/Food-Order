@@ -1,26 +1,47 @@
-"use client";
+'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FaShoppingCart } from 'react-icons/fa';
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [cartItemCount, setCartItemCount] = useState(0);
+
+  // Read cart from localStorage and update count
+  const updateCartCount = () => {
+    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+    setCartItemCount(cart.reduce((total, item) => total + item.quantity, 0));
+  };
 
   useEffect(() => {
+    // Initial cart count
+    updateCartCount();
+
+    // Listen to storage events
+    const handleStorageChange = () => {
+      updateCartCount();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Custom event listener for same-tab updates
+    window.addEventListener('cart-updated', handleStorageChange);
+
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('cart-updated', handleStorageChange);
+    };
   }, []);
 
   return (
-    <nav className={`fixed w-full z-50 transition-all duration-300 ${
-      isScrolled 
-        ? 'bg-[#09122c]/80 backdrop-blur-lg shadow-md border-b border-white/30' 
-        : 'bg-transparent'
-    }`}>
+    <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-[#09122c]/80 backdrop-blur-lg shadow-md border-b border-white/30' : 'bg-transparent'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -47,10 +68,15 @@ const Navbar = () => {
           </div>
 
           {/* Cart Icon */}
-          <div className="flex items-center">
+          <div className="flex items-center relative">
             <Link href="/cart" className="p-2 hover:bg-white/20 rounded-full transition-all duration-200">
               <FaShoppingCart className="h-6 w-6 text-white hover:text-yellow-400 transition-colors duration-200" />
             </Link>
+            {cartItemCount > 0 && (
+              <div className="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs text-white bg-red-500 rounded-full">
+                {cartItemCount}
+              </div>
+            )}
           </div>
         </div>
       </div>

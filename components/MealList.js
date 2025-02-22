@@ -65,6 +65,9 @@ const MealList = () => {
     localStorage.setItem('cart', JSON.stringify(updatedCart));
     setCartCount(updatedCart.length);
   };
+  // Trigger cart update event
+  const event = new Event('cart-updated');
+  window.dispatchEvent(event);
 
   const generateRating = () => (Math.random() * (5 - 3.5) + 3.5).toFixed(1);
   const cookingTime = () => Math.floor(Math.random() * (60 - 20) + 20);

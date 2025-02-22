@@ -67,7 +67,7 @@ body {
   background-image: linear-gradient(
     90deg,
     transparent,
-    rgba(255,255,255,0.1),
+    rgba(255, 255, 255, 0.1),
     transparent
   );
   animation: shimmer 2s infinite;
@@ -83,14 +83,4 @@ body {
   .backdrop-blur-xs {
     backdrop-filter: blur(2px);
   }
-}
-
-@keyframes float {
-  0% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
-  100% { transform: translateY(0px); }
-}
-
-.floating {
-  animation: float 6s ease-in-out infinite;
 }
