@@ -73,6 +73,22 @@ body {
   animation: shimmer 2s infinite;
 }
 
+.StripeElement {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+
+.StripeElement--focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 1px #6366f1;
+}
+
+.StripeElement--invalid {
+  border-color: #ef4444;
+}
+
 /* Delay Utilities */
 .delay-100 { animation-delay: 100ms; }
 .delay-200 { animation-delay: 200ms; }

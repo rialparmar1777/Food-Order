@@ -5,13 +5,14 @@ import { useRouter } from 'next/navigation';
 export default function MenuPage() {
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
   const router = useRouter();
 
   useEffect(() => {
-    fetchMeals();
-  }, []);
+    fetchMeals(page);
+  }, [page]);
 
-  const fetchMeals = async () => {
+  const fetchMeals = async (pageNumber) => {
     try {
       setLoading(true);
       // Fetch 9 random meals from TheMealDB API
@@ -22,7 +23,7 @@ export default function MenuPage() {
           return data.meals[0];
         })
       );
-      setMeals(mealsData);
+      setMeals(prevMeals => [...prevMeals, ...mealsData]);
     } catch (error) {
       console.error('Error fetching meals:', error);
     } finally {
@@ -58,7 +59,7 @@ export default function MenuPage() {
     setTimeout(() => element.classList.remove('scale-105'), 200);
     
     router.push('/cart');
-  };  // ... existing state and logic ...
+  };
 
   if (loading) {
     return (
@@ -96,7 +97,7 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {/* Floating Grid */}
+      {/* Meal Grid */}
       <div className="container mx-auto px-4 py-24 -mt-40 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 hover:[&>*]:opacity-50 
                         [&>*:hover]:opacity-100 [&>*:hover]:scale-105 transition-all duration-300">
@@ -112,7 +113,7 @@ export default function MenuPage() {
                 <img 
                   src={meal.strMealThumb} 
                   alt={meal.strMeal}
-                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-cover transform group-hover:scale-110 group-hover:rotate-2 transition-transform duration-700"
                 />
                 <div className="absolute top-4 right-4 flex flex-col gap-2">
                   <div className="bg-emerald-400/20 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
@@ -158,10 +159,10 @@ export default function MenuPage() {
           ))}
         </div>
 
-        {/* Floating Action Button */}
+        {/* Load More Button */}
         <div className="fixed bottom-8 right-8 z-50">
           <button 
-            onClick={fetchMeals}
+            onClick={() => setPage(prevPage => prevPage + 1)}
             className="group bg-gradient-to-r from-emerald-500 to-cyan-500 p-6 rounded-full shadow-2xl
                      hover:shadow-emerald-400/20 transition-all duration-500 hover:rotate-180 flex items-center
                      justify-center aspect-square"
