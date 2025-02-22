@@ -5,8 +5,6 @@ import Navbar from "../components/Navbar";
 import '../app/globals.css';
 import HeroSection from "../components/HeroSection";
 import MealList from "../components/MealList";
-import Footer from "../components/Footer";
-
 export default function Home() {
   return (
     <div>

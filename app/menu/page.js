@@ -1,216 +1,192 @@
-"use client";
-import { useState, useEffect } from "react";
-import Navbar from "../../components/Navbar";
-import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+'use client';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-const MenuPage = () => {
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const [menuItems, setMenuItems] = useState([]);
-  const [cartCoordinates, setCartCoordinates] = useState(null);
-  const [flyingImage, setFlyingImage] = useState(null);
-
-  const categories = [
-    { id: "all", name: "All" },
-    { id: "main", name: "Main Course" },
-    { id: "appetizer", name: "Appetizers" },
-    { id: "dessert", name: "Desserts" },
-    { id: "drinks", name: "Drinks" },
-  ];
+export default function MenuPage() {
+  const [meals, setMeals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    const fetchMenuItems = async () => {
-      try {
-        // Fetching from local API
-        const response = await fetch("/api/meals");
-        const localData = await response.json();
-
-        // Fetching random meals from external API
-        const mealPromises = Array(5)
-          .fill()
-          .map(() =>
-            fetch("https://www.themealdb.com/api/json/v1/1/random.php").then(
-              (res) => res.json()
-            )
-          );
-        const mealResults = await Promise.all(mealPromises);
-
-        const formattedMeals = mealResults.map((result) => ({
-          id: result.meals[0].idMeal,
-          name: result.meals[0].strMeal,
-          image: result.meals[0].strMealThumb,
-          description:
-            result.meals[0].strInstructions.substring(0, 100) + "...",
-          price: (Math.random() * (25 - 10) + 10).toFixed(2),
-          category: "special",
-        }));
-
-        setMenuItems([...localData, ...formattedMeals]);
-      } catch (error) {
-        console.error("Error fetching menu items:", error);
-      }
-    };
-
-    fetchMenuItems();
-
-    const cartIcon = document.querySelector(".cart-icon");
-    if (cartIcon) {
-      const rect = cartIcon.getBoundingClientRect();
-      setCartCoordinates({
-        x: rect.x + rect.width / 2,
-        y: rect.y + rect.height / 2,
-      });
-    }
+    fetchMeals();
   }, []);
 
-  const handleAddToCart = (item, event) => {
-    const rect = event.currentTarget.getBoundingClientRect();
-    const start = {
-      x: rect.x + rect.width / 2,
-      y: rect.y + rect.height / 2,
-    };
-
-    setFlyingImage({
-      src: item.image,
-      start,
-      item,
-    });
-
-    setTimeout(() => {
-      setFlyingImage(null);
-    }, 1000);
+  const fetchMeals = async () => {
+    try {
+      setLoading(true);
+      // Fetch 9 random meals from TheMealDB API
+      const mealsData = await Promise.all(
+        Array(9).fill().map(async () => {
+          const res = await fetch('https://www.themealdb.com/api/json/v1/1/random.php');
+          const data = await res.json();
+          return data.meals[0];
+        })
+      );
+      setMeals(mealsData);
+    } catch (error) {
+      console.error('Error fetching meals:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const filteredItems =
-    selectedCategory === "all"
-      ? menuItems
-      : menuItems.filter((item) => item.category === selectedCategory);
+  const addToCart = (meal) => {
+    const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const existingItem = existingCart.find(item => item.id === meal.idMeal);
+    
+    let updatedCart;
+    if (existingItem) {
+      updatedCart = existingCart.map(item => 
+        item.id === meal.idMeal 
+          ? {...item, quantity: item.quantity + 1}
+          : item
+      );
+    } else {
+      updatedCart = [...existingCart, {
+        id: meal.idMeal,
+        name: meal.strMeal,
+        price: (Math.random() * (25 - 8) + 8).toFixed(2),
+        image: meal.strMealThumb,
+        quantity: 1
+      }];
+    }
+
+    localStorage.setItem('cart', JSON.stringify(updatedCart));
+    
+    const element = document.getElementById(`meal-${meal.idMeal}`);
+    element.classList.add('scale-105');
+    setTimeout(() => element.classList.remove('scale-105'), 200);
+    
+    router.push('/cart');
+  };  // ... existing state and logic ...
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-indigo-900 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative h-24 w-24">
+            <div className="absolute inset-0 border-4 border-emerald-500/30 rounded-full animate-pulse"></div>
+            <div className="absolute inset-0 border-4 border-emerald-500 rounded-full animate-spin border-t-transparent"></div>
+          </div>
+          <p className="text-emerald-400 font-medium text-lg tracking-wide">
+            Crafting your gourmet experience...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#09122c] to-[#1a237e]">
-      <Navbar />
-
-      {/* Hero Section */}
-      <div className="relative h-[50vh] w-full">
-        <div className="absolute inset-0 bg-black/60 z-10" />
-        <Image
-          src="/menu-hero.jpg"
-          alt="Menu Background"
-          fill
-          className="object-cover"
-          priority
-        />
-        <div className="relative z-20 h-full flex flex-col items-center justify-center">
-          <motion.h1
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-6xl font-bold text-white text-center mb-4"
-          >
-            Our Menu
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.2 }}
-            className="text-xl text-gray-200 max-w-2xl text-center px-4"
-          >
-            Discover our carefully curated selection of delicious dishes
-          </motion.p>
+    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900">
+      {/* Parallax Header */}
+      <div className="relative h-[60vh] overflow-hidden">
+        <div className="absolute inset-0 bg-black/40 z-10"></div>
+        <div 
+          className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=1920')] 
+                   bg-cover bg-center animate-parallax"
+        ></div>
+        <div className="relative z-20 flex flex-col items-center justify-center h-full text-center px-4">
+          <h1 className="text-7xl font-bold mb-6 bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent 
+                          animate-fade-in-up">
+            Epicurean Odyssey
+          </h1>
+          <p className="text-slate-100 text-2xl max-w-4xl mx-auto leading-relaxed opacity-90 animate-fade-in-up delay-100">
+            Journey through a universe of flavors, where each dish is a constellation of culinary artistry
+          </p>
         </div>
       </div>
 
-      {/* Category Filter */}
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap justify-center gap-4 mb-16"
-        >
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              onClick={() => setSelectedCategory(category.id)}
-              className={`px-8 py-3 rounded-full text-lg transition-all duration-300 transform hover:scale-105 ${
-                selectedCategory === category.id
-                  ? "bg-yellow-400 text-[#09122c] font-bold shadow-lg"
-                  : "bg-white/10 text-white hover:bg-white/20"
-              }`}
+      {/* Floating Grid */}
+      <div className="container mx-auto px-4 py-24 -mt-40 relative z-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 hover:[&>*]:opacity-50 
+                        [&>*:hover]:opacity-100 [&>*:hover]:scale-105 transition-all duration-300">
+          {meals.map((meal) => (
+            <div 
+              id={`meal-${meal.idMeal}`}
+              key={meal.idMeal} 
+              className="group bg-slate-800/50 backdrop-blur-lg rounded-3xl shadow-2xl border border-slate-700/50 
+                        transition-all duration-500 hover:border-emerald-400/30 hover:shadow-emerald-400/10"
             >
-              {category.name}
-            </button>
-          ))}
-        </motion.div>
-
-        {/* Menu Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <AnimatePresence>
-            {filteredItems.map((item) => (
-              <motion.div
-                key={item.id}
-                layout
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.9 }}
-                transition={{ duration: 0.3 }}
-                className="bg-white/10 backdrop-blur-lg rounded-2xl overflow-hidden hover:transform hover:scale-105 transition-all duration-300 shadow-xl"
-              >
-                <div className="relative h-56 w-full overflow-hidden">
-                  <Image
-                    src={item.image}
-                    alt={item.name}
-                    fill
-                    className="object-cover transform hover:scale-110 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                </div>
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold text-white mb-2">
-                    {item.name}
-                  </h3>
-                  <p className="text-gray-300 mb-4 line-clamp-2">
-                    {item.description}
-                  </p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-yellow-400 text-2xl font-bold">
-                      ${item.price}
+              <div className="relative h-96 overflow-hidden rounded-t-3xl">
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent z-10"></div>
+                <img 
+                  src={meal.strMealThumb} 
+                  alt={meal.strMeal}
+                  className="w-full h-full object-cover transform group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute top-4 right-4 flex flex-col gap-2">
+                  <div className="bg-emerald-400/20 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
+                    <span className="text-emerald-400 font-bold text-xl">
+                      ${(Math.random() * (25 - 8) + 8).toFixed(2)}
                     </span>
-                    <button
-                      onClick={(e) => handleAddToCart(item, e)}
-                      className="bg-yellow-400 text-[#09122c] px-6 py-3 rounded-full font-bold hover:bg-yellow-500 transition-all duration-200 transform hover:scale-105 active:scale-95"
-                    >
-                      Add to Cart
-                    </button>
+                  </div>
+                  <div className="bg-cyan-400/20 backdrop-blur-sm px-4 py-2 rounded-full">
+                    <span className="text-cyan-400 text-sm font-medium">
+                      ★ {(Math.random() * 2 + 3).toFixed(1)}
+                    </span>
                   </div>
                 </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+              </div>
+              
+              <div className="p-8">
+                <div className="mb-6">
+                  <span className="bg-slate-700/50 text-emerald-400 px-4 py-2 rounded-full text-sm font-medium">
+                    {meal.strArea} Heritage
+                  </span>
+                </div>
+                <h3 className="text-2xl font-bold text-slate-100 mb-4 line-clamp-2 group-hover:text-emerald-400 transition-colors">
+                  {meal.strMeal}
+                </h3>
+                <p className="text-slate-400 mb-6 line-clamp-3 leading-relaxed text-sm">
+                  {meal.strInstructions?.slice(0, 200)}...
+                </p>
+                <button 
+                  onClick={() => addToCart(meal)}
+                  className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-900 py-4 rounded-xl
+                           hover:from-emerald-400 hover:to-cyan-400 transform transition-all duration-300
+                           flex items-center justify-center space-x-3 font-bold tracking-wide shadow-lg
+                           hover:shadow-emerald-400/20 relative overflow-hidden"
+                >
+                  <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-20 transition-opacity"></div>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span>Add to Experience</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Floating Action Button */}
+        <div className="fixed bottom-8 right-8 z-50">
+          <button 
+            onClick={fetchMeals}
+            className="group bg-gradient-to-r from-emerald-500 to-cyan-500 p-6 rounded-full shadow-2xl
+                     hover:shadow-emerald-400/20 transition-all duration-500 hover:rotate-180 flex items-center
+                     justify-center aspect-square"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-slate-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      {/* Flying Image Animation */}
-      {flyingImage && cartCoordinates && (
-        <motion.div
-          initial={{
-            x: flyingImage.start.x,
-            y: flyingImage.start.y,
-            scale: 1,
-            opacity: 1,
-          }}
-          animate={{
-            x: cartCoordinates.x,
-            y: cartCoordinates.y,
-            scale: 0.1,
-            opacity: 0,
-          }}
-          transition={{ duration: 0.7, ease: "easeInOut" }}
-          className="fixed z-50 w-20 h-20 rounded-full overflow-hidden pointer-events-none"
-        >
-          <Image src={flyingImage.src} alt="Flying item" fill className="object-cover" />
-        </motion.div>
-      )}
-    </div>
+      {/* Animated Background Elements */}
+      <div className="fixed inset-0 z-0 opacity-20 pointer-events-none">
+        {[...Array(20)].map((_, i) => (
+          <div 
+            key={i}
+            className="absolute w-1 h-1 bg-emerald-400 rounded-full animate-float"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${i * 0.5}s`
+            }}
+          ></div>
+        ))}
+      </div>
+    </main>
   );
-};
-
-export default MenuPage;
+}

@@ -204,10 +204,10 @@ const HeroSection = () => {
           <h2>Fresh & Delicious Food</h2>
           <p>Order your favorite meals and enjoy fast delivery.</p>
           <div className="cta">
-            <Link href="#menu" className="primary">
+            <Link href="/menu" className="primary">
               Order Now
             </Link>
-            <Link href="#about" className="secondary">
+            <Link href="/about" className="secondary">
               Learn More
             </Link>
           </div>
