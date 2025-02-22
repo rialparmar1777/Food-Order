@@ -3,9 +3,9 @@ import Stripe from 'stripe';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
-  const { amount, payment_method } = req.body;
-  
   try {
+    const { amount, payment_method } = req.body;
+    
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
       currency: 'usd',
@@ -17,4 +17,4 @@ export default async function handler(req, res) {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
-}   
+}
