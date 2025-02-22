@@ -25,39 +25,38 @@ const CartPage = () => {
   const [checkoutStep, setCheckoutStep] = useState('cart');
   const [loading, setLoading] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState('delivery');
-  const [deliveryTime, setDeliveryTime] = useState(''); 
+  const [deliveryTime, setDeliveryTime] = useState('');
   const [shippingInfo, setShippingInfo] = useState({
     name: '',
     email: '',
     address: '',
     city: '',
     postalCode: '',
-    instructions: ''
+    instructions: '',
   });
   const [formErrors, setFormErrors] = useState({});
-
   const HST_RATE = 0.13; // 13% HST rate for Ontario
 
   useEffect(() => {
     const items = JSON.parse(localStorage.getItem('cart') || '[]');
     setCartItems(items);
     calculateTotal(items);
-    
+
     const handleStorageChange = () => {
       const updatedItems = JSON.parse(localStorage.getItem('cart') || '[]');
       setCartItems(updatedItems);
       calculateTotal(updatedItems);
     };
-    
+
     window.addEventListener('cart-updated', handleStorageChange);
     return () => window.removeEventListener('cart-updated', handleStorageChange);
   }, []);
 
   const calculateTotal = (items) => {
-    const subtotalAmount = items.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const subtotalAmount = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
     const taxAmount = subtotalAmount * HST_RATE;
     const totalAmount = subtotalAmount + taxAmount;
-    
+
     setSubtotal(subtotalAmount.toFixed(2));
     setTax(taxAmount.toFixed(2));
     setTotal(totalAmount.toFixed(2));
@@ -85,63 +84,63 @@ const CartPage = () => {
 
   const handleCheckout = async () => {
     if (!stripe || !elements) return; // Stripe.js has not yet loaded
-    
-    // Make sure all fields are validated
-    if (
-      !shippingInfo.name ||
-      !shippingInfo.address ||
-      !shippingInfo.city ||
-      !shippingInfo.postalCode ||
-      !deliveryMethod ||
-      !deliveryTime
-    ) {
-      setFormErrors({ message: 'Please fill all the required fields!' });
+
+    let errors = {};
+
+    // Validate shipping info
+    if (!shippingInfo.name) errors.name = 'Name is required';
+    if (!shippingInfo.address) errors.address = 'Address is required';
+    if (!shippingInfo.city) errors.city = 'City is required';
+    if (!shippingInfo.postalCode) errors.postalCode = 'Postal code is required';
+    if (!deliveryMethod) errors.deliveryMethod = 'Please select a delivery method';
+    if (!deliveryTime) errors.deliveryTime = 'Please select a delivery time';
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
       return;
     }
-  
-    // Create payment method with Stripe Elements
+
     setLoading(true);
+
     try {
       const cardNumber = elements.getElement(CardNumberElement);
       const cardExpiry = elements.getElement(CardExpiryElement);
       const cardCvc = elements.getElement(CardCvcElement);
-  
+
+      // Create a payment method with Stripe
       const { error, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
         card: cardNumber,
       });
-  
+
       if (error) {
         setFormErrors({ message: error.message });
         setLoading(false);
         return;
       }
-  
-      // Send payment method info to the backend for further processing (e.g., creating payment intent)
-      const response = await fetch('/api/payment', {
+
+      // Proceed with the payment flow if no error
+      const response = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           payment_method: paymentMethod.id,
-          total,
-          shippingInfo,
-          deliveryMethod,
-          deliveryTime,
+          amount: total * 100, // Convert to cents
         }),
       });
-  
+
       const { clientSecret } = await response.json();
+
       const { error: stripeError } = await stripe.confirmCardPayment(clientSecret, {
         payment_method: paymentMethod.id,
       });
-  
+
       if (stripeError) {
         setFormErrors({ message: stripeError.message });
         setLoading(false);
       } else {
-        // Successful payment
         setLoading(false);
-        router.push('/order-confirmation'); // Redirect to order confirmation page
+        router.push('/order-confirmation');
       }
     } catch (error) {
       setFormErrors({ message: 'An error occurred while processing your payment.' });
@@ -202,7 +201,7 @@ const CartPage = () => {
               {/* Time Selection */}
               <div className="bg-white p-6 rounded-xl shadow-sm">
                 <h3 className="text-xl font-semibold mb-4">Select {deliveryMethod === 'delivery' ? 'Delivery' : 'Pickup'} Time</h3>
-                <select 
+                <select
                   value={deliveryTime}
                   onChange={(e) => setDeliveryTime(e.target.value)}
                   className="w-full p-3 border rounded-lg"
@@ -229,83 +228,138 @@ const CartPage = () => {
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="w-32 h-32 object-cover rounded-xl"
+                        className="w-32 h-32 object-cover rounded-lg"
                       />
                       <div className="flex-1">
-                        <h3 className="text-xl font-semibold">{item.name}</h3>
-                        <p className="text-gray-600 mt-2">${item.price} each</p>
-                        
-                        <div className="flex items-center gap-6 mt-4">
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={() => updateQuantity(item.id, -1)}
-                              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-                            >
-                              <FaMinus />
-                            </button>
-                            <span className="text-lg font-medium w-8 text-center">{item.quantity}</span>
-                            <button
-                              onClick={() => updateQuantity(item.id, 1)}
-                              className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-                            >
-                              <FaPlus />
-                            </button>
-                          </div>
-                          
-
-                          <p className="text-lg font-semibold">
-                            ${(item.price * item.quantity).toFixed(2)}
-                          </p>
-                          
-                          <button
-                            onClick={() => removeFromCart(item.id)}
-                            className="ml-4 text-red-600 hover:text-red-800"
-                          >
-                            <FaTrash />
-                          </button>
-                        </div>
+                        <h4 className="text-lg font-semibold">{item.name}</h4>
+                        <p className="text-gray-600">Quantity: {item.quantity}</p>
+                        <p className="text-lg font-bold text-indigo-600">${(item.price * item.quantity).toFixed(2)}</p>
                       </div>
+                      <div className="flex flex-col items-center">
+                        <button
+                          onClick={() => updateQuantity(item.id, 1)}
+                          className="p-2 bg-indigo-600 rounded-lg text-white mb-2"
+                        >
+                          <FaPlus />
+                        </button>
+                        <button
+                          onClick={() => updateQuantity(item.id, -1)}
+                          className="p-2 bg-red-600 rounded-lg text-white"
+                        >
+                          <FaMinus />
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        className="ml-6 text-red-600 hover:text-red-800 transition-colors"
+                      >
+                        <FaTrash />
+                      </button>
                     </div>
                   </motion.div>
                 ))}
               </AnimatePresence>
             </div>
 
-            {/* Checkout Section */}
-            <div className="bg-white p-6 rounded-xl shadow-sm h-fit sticky top-24">
-              <h2 className="text-2xl font-bold mb-6">Order Summary</h2>
+            <div className="lg:col-span-1 bg-white p-8 rounded-xl shadow-sm">
+              {/* Cart Summary */}
+              <h3 className="text-xl font-semibold mb-6">Order Summary</h3>
               <div className="space-y-4">
-                <div className="flex justify-between font-bold">
-                  <span>Subtotal</span>
-                  <span>${subtotal}</span>
+                <div className="flex justify-between">
+                  <span className="text-lg">Subtotal</span>
+                  <span className="text-lg font-semibold">${subtotal}</span>
                 </div>
-                <div className="flex justify-between font-bold">
-                  <span>Tax (HST)</span>
-                  <span>${tax}</span>
+                <div className="flex justify-between">
+                  <span className="text-lg">Tax (HST 13%)</span>
+                  <span className="text-lg font-semibold">${tax}</span>
                 </div>
-                <div className="flex justify-between font-bold">
+                <div className="flex justify-between text-lg font-semibold mt-4">
                   <span>Total</span>
                   <span>${total}</span>
                 </div>
               </div>
 
-              {/* Checkout Button */}
-              <button
-                onClick={handleCheckout}
-                className={`w-full bg-indigo-600 text-white py-4 rounded-xl mt-6 ${loading ? 'opacity-50' : ''}`}
-                disabled={loading}
-              >
-                {loading ? (
-                  <FaSpinner className="inline animate-spin mr-2" />
+              {/* Checkout Form */}
+              <div className="mt-6">
+                {checkoutStep === 'cart' ? (
+                  <button
+                    onClick={() => setCheckoutStep('shipping')}
+                    className="w-full bg-indigo-600 text-white py-4 rounded-xl"
+                  >
+                    Proceed to Checkout
+                  </button>
                 ) : (
-                  <FaLock className="inline mr-2" />
-                )}
-                {loading ? 'Processing...' : 'Proceed to Checkout'}
-              </button>
+                  <div>
+                    <form onSubmit={handleCheckout}>
+                      <div className="space-y-4">
+                        <input
+                          type="text"
+                          name="name"
+                          value={shippingInfo.name}
+                          onChange={(e) => setShippingInfo({ ...shippingInfo, name: e.target.value })}
+                          className="w-full p-3 border rounded-lg"
+                          placeholder="Name"
+                        />
+                        <input
+                          type="email"
+                          name="email"
+                          value={shippingInfo.email}
+                          onChange={(e) => setShippingInfo({ ...shippingInfo, email: e.target.value })}
+                          className="w-full p-3 border rounded-lg"
+                          placeholder="Email"
+                        />
+                        <input
+                          type="text"
+                          name="address"
+                          value={shippingInfo.address}
+                          onChange={(e) => setShippingInfo({ ...shippingInfo, address: e.target.value })}
+                          className="w-full p-3 border rounded-lg"
+                          placeholder="Address"
+                        />
+                        <input
+                          type="text"
+                          name="city"
+                          value={shippingInfo.city}
+                          onChange={(e) => setShippingInfo({ ...shippingInfo, city: e.target.value })}
+                          className="w-full p-3 border rounded-lg"
+                          placeholder="City"
+                        />
+                        <input
+                          type="text"
+                          name="postalCode"
+                          value={shippingInfo.postalCode}
+                          onChange={(e) => setShippingInfo({ ...shippingInfo, postalCode: e.target.value })}
+                          className="w-full p-3 border rounded-lg"
+                          placeholder="Postal Code"
+                        />
+                      </div>
 
-              {formErrors.message && (
-                <div className="text-red-600 mt-4">{formErrors.message}</div>
-              )}
+                      {/* Card Details */}
+                      <div className="mt-4">
+                        <CardNumberElement className="w-full p-3 border rounded-lg mb-2" />
+                        <div className="flex gap-4">
+                          <CardExpiryElement className="flex-1 p-3 border rounded-lg" />
+                          <CardCvcElement className="flex-1 p-3 border rounded-lg" />
+                        </div>
+                      </div>
+
+                      {/* Error Display */}
+                      {formErrors.message && (
+                        <p className="text-red-600 text-center mt-4">{formErrors.message}</p>
+                      )}
+
+                      {/* Submit Button */}
+                      <button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-indigo-600 text-white py-4 rounded-xl mt-6"
+                      >
+                        {loading ? <FaSpinner className="animate-spin" /> : 'Complete Payment'}
+                      </button>
+                    </form>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
