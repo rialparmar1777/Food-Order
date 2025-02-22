@@ -23,8 +23,6 @@ const Navbar = () => {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    
-    // Custom event listener for same-tab updates
     window.addEventListener('cart-updated', handleStorageChange);
 
     const handleScroll = () => {
@@ -32,7 +30,7 @@ const Navbar = () => {
     };
 
     window.addEventListener('scroll', handleScroll);
-    
+
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('storage', handleStorageChange);
@@ -41,7 +39,7 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className={`fixed w-full z-50 transition-all duration-300 ${isScrolled ? 'bg-[#09122c]/80 backdrop-blur-lg shadow-md border-b border-white/30' : 'bg-transparent'}`}>
+    <nav className={`fixed w-full z-50 transition-all duration-300 backdrop-blur-lg border-b border-white/20 bg-white/10 ${isScrolled ? 'shadow-md' : 'shadow-none'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
