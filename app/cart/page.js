@@ -115,17 +115,21 @@ const CartPage = () => {
   };
 
   const updateQuantity = (id, change) => {
-    const updatedCart = cartItems.map(item => 
-      item.id === id ? { ...item, quantity: Math.max(1, item.quantity + change) } : item
-    );
+    const updatedCart = cartItems.map(item => {
+      if (item.idMeal === id) {
+        const newQuantity = Math.max(1, item.quantity + change);
+        return { ...item, quantity: newQuantity };
+      }
+      return item;
+    });
     localStorage.setItem('cart', JSON.stringify(updatedCart));
-    window.dispatchEvent(new Event('cart-updated'));
+    setCartItems(updatedCart);
   };
 
   const removeFromCart = (id) => {
-    const updatedCart = cartItems.filter(item => item.id !== id);
+    const updatedCart = cartItems.filter(item => item.idMeal !== id);
     localStorage.setItem('cart', JSON.stringify(updatedCart));
-    window.dispatchEvent(new Event('cart-updated'));
+    setCartItems(updatedCart);
   };
 
   return (
@@ -150,7 +154,7 @@ const CartPage = () => {
               onClick={() => router.push('/menu')}
               className="bg-emerald-500 text-white px-8 py-3 rounded-lg hover:bg-emerald-600 transition-colors"
             >
-              Browse Menu
+             Browse Menu
             </button>
           </motion.div>
         ) : (
@@ -166,7 +170,7 @@ const CartPage = () => {
                       exit={{ opacity: 0, x: -20 }}
                       className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:border-emerald-500 transition-all duration-300"
                     >
-                      <div className="flex items-start gap-6">
+                     <div className="flex items-start gap-6">
                         <div className="relative w-32 h-32">
                           <Image
                             src={item.strMealThumb}
@@ -194,14 +198,14 @@ const CartPage = () => {
                             onClick={() => updateQuantity(item.idMeal, -1)}
                             className="p-2 bg-red-500 rounded-lg text-white hover:bg-red-600 transition-colors"
                           >
-                            <FaMinus />
+                           <FaMinus />
                           </button>
                         </div>
                         <button
                           onClick={() => removeFromCart(item.idMeal)}
-                          className="ml-6 text-red-500 hover:text-red-600 transition-colors"
+                          className="text-gray-400 hover:text-red-600 transition-colors"
                         >
-                          <FaTrash />
+                          <FaTrash /> 
                         </button>
                       </div>
                     </motion.div>

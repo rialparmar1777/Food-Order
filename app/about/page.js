@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import { FaUtensils, FaTruck, FaUsers, FaAward, FaStar, FaHeart, FaLeaf, FaClock } from "react-icons/fa";
+import Link from "next/link";
 
 const AboutPage = () => {
   return (
@@ -9,6 +10,7 @@ const AboutPage = () => {
       <div className="relative h-[70vh] flex items-center justify-center overflow-hidden">
         <div 
           className="absolute inset-0 bg-[url('/restaurant-bg.jpg')] bg-cover bg-center opacity-30"
+          style={{ filter: "brightness(0.7)" }}
         />
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
@@ -16,9 +18,9 @@ const AboutPage = () => {
           transition={{ duration: 1 }}
           className="text-center relative z-10"
         >
-          <h1 className="text-6xl font-extrabold text-yellow-400 drop-shadow-lg">Our Story</h1>
-          <p className="text-xl mt-4 max-w-2xl mx-auto px-6 drop-shadow-md">
-            Delivering exceptional dining experiences since 2010
+          <h1 className="text-6xl font-extrabold text-yellow-400 drop-shadow-lg mb-6">Our Story</h1>
+          <p className="text-2xl mt-4 max-w-3xl mx-auto px-6 drop-shadow-md text-gray-200">
+            Delivering exceptional dining experiences since 2010, with a passion for culinary excellence
           </p>
         </motion.div>
       </div>
@@ -29,35 +31,35 @@ const AboutPage = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
-          className="text-5xl font-bold text-yellow-400 mb-8"
+          className="text-5xl font-bold text-yellow-400 mb-12"
         >
           Our Mission
         </motion.h2>
-        <p className="text-lg text-gray-300 max-w-3xl mx-auto leading-relaxed">
-          At FOOD_ORDER, we're passionate about delivering not just meals, but moments of joy. 
-          Our mission is to connect food lovers with the finest cuisines while ensuring 
-          quality, convenience, and satisfaction in every order.
+        <p className="text-xl text-gray-300 max-w-4xl mx-auto leading-relaxed">
+          At FOOD_ORDER, we're driven by a singular passion: delivering not just meals, but unforgettable moments of culinary joy. 
+          Our mission is to bridge the gap between food lovers and exceptional cuisines, ensuring unparalleled 
+          quality, seamless convenience, and complete satisfaction with every single order.
         </p>
       </div>
 
       {/* Stats Grid */}
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8 mb-20 px-6">
         {[ 
-          { icon: FaUtensils, stat: "50K+", text: "Orders Delivered" },
-          { icon: FaTruck, stat: "100+", text: "Delivery Partners" },
-          { icon: FaUsers, stat: "30K+", text: "Happy Customers" },
-          { icon: FaAward, stat: "15+", text: "Awards Won" }
+          { icon: FaUtensils, stat: "100K+", text: "Orders Delivered" },
+          { icon: FaTruck, stat: "150+", text: "Delivery Partners" },
+          { icon: FaUsers, stat: "50K+", text: "Happy Customers" },
+          { icon: FaAward, stat: "25+", text: "Awards Won" }
         ].map((item, index) => (
           <motion.div
             key={index}
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: index * 0.1 }}
-            className="bg-white/10 backdrop-blur-lg rounded-xl p-8 text-center shadow-lg hover:scale-105 transition-transform duration-300"
+            className="bg-white/10 backdrop-blur-lg rounded-xl p-8 text-center shadow-lg hover:scale-105 transition-transform duration-300 hover:bg-white/15"
           >
-            <item.icon className="text-yellow-400 text-5xl mx-auto mb-4" />
-            <h3 className="text-4xl font-bold text-white mb-2">{item.stat}</h3>
-            <p className="text-gray-300 text-lg">{item.text}</p>
+            <item.icon className="text-yellow-400 text-6xl mx-auto mb-6" />
+            <h3 className="text-4xl font-bold text-white mb-3">{item.stat}</h3>
+            <p className="text-gray-300 text-xl">{item.text}</p>
           </motion.div>
         ))}
       </div>
@@ -68,19 +70,19 @@ const AboutPage = () => {
           { 
             title: "Our Values", 
             items: [
-              "Quality and freshness in every meal", 
-              "Timely and reliable delivery service", 
-              "Customer satisfaction is our priority", 
-              "Supporting local restaurants and communities"
+              "Exceptional quality and freshness guaranteed", 
+              "Swift and reliable delivery service", 
+              "Customer satisfaction is our top priority", 
+              "Strong support for local restaurants and communities"
             ]
           },
           { 
             title: "Why Choose Us", 
             items: [
-              "Wide selection of cuisines", 
-              "Easy ordering process", 
-              "Real-time order tracking", 
-              "24/7 customer support"
+              "Extensive selection of global cuisines", 
+              "Intuitive and seamless ordering process", 
+              "Advanced real-time order tracking", 
+              "Round-the-clock dedicated customer support"
             ]
           }
         ].map((section, idx) => (
@@ -89,13 +91,13 @@ const AboutPage = () => {
             initial={{ opacity: 0, x: idx === 0 ? -50 : 50 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
-            className="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-xl"
+            className="bg-white/10 backdrop-blur-lg rounded-xl p-10 shadow-xl hover:bg-white/15 transition-colors duration-300"
           >
-            <h3 className="text-3xl font-bold text-yellow-400 mb-6 text-center">{section.title}</h3>
-            <ul className="space-y-4 text-gray-300 text-lg">
+            <h3 className="text-4xl font-bold text-yellow-400 mb-8 text-center">{section.title}</h3>
+            <ul className="space-y-6 text-gray-300 text-xl">
               {section.items.map((item, index) => (
-                <li key={index} className="flex items-center gap-3">
-                  <span className="h-3 w-3 bg-yellow-400 rounded-full" /> {item}
+                <li key={index} className="flex items-center gap-4">
+                  <span className="h-4 w-4 bg-yellow-400 rounded-full" /> {item}
                 </li>
               ))}
             </ul>
@@ -109,7 +111,7 @@ const AboutPage = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
-          className="text-5xl font-bold text-yellow-400 mb-8 text-center"
+          className="text-5xl font-bold text-yellow-400 mb-12 text-center"
         >
           What Our Customers Say
         </motion.h2>
@@ -117,17 +119,17 @@ const AboutPage = () => {
           {[
             {
               name: "John Doe",
-              review: "The best food delivery service I've ever used! Fast, reliable, and delicious.",
+              review: "Absolutely outstanding service! The food arrives hot and fresh every time. Their attention to detail is remarkable.",
               rating: 5
             },
             {
               name: "Jane Smith",
-              review: "Amazing variety and great customer support. Highly recommend!",
+              review: "Incredible variety and exceptional customer support. They've made ordering food a delightful experience!",
               rating: 5
             },
             {
               name: "Mike Johnson",
-              review: "Every meal feels like it's made just for me. Love it!",
+              review: "The personalization and care they put into each order is unmatched. Simply the best in the business!",
               rating: 5
             }
           ].map((testimonial, index) => (
@@ -136,15 +138,15 @@ const AboutPage = () => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-lg"
+              className="bg-white/10 backdrop-blur-lg rounded-xl p-8 shadow-lg hover:bg-white/15 transition-colors duration-300"
             >
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-2 mb-6">
                 {[...Array(testimonial.rating)].map((_, i) => (
-                  <FaStar key={i} className="text-yellow-400" />
+                  <FaStar key={i} className="text-yellow-400 text-xl" />
                 ))}
               </div>
-              <p className="text-gray-300 text-lg mb-4">{testimonial.review}</p>
-              <p className="text-yellow-400 font-semibold">{testimonial.name}</p>
+              <p className="text-gray-300 text-lg mb-6 italic">&quot;{testimonial.review}&quot;</p>
+              <p className="text-yellow-400 font-semibold text-xl">{testimonial.name}</p>
             </motion.div>
           ))}
         </div>
@@ -156,7 +158,7 @@ const AboutPage = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
-          className="text-5xl font-bold text-yellow-400 mb-8 text-center"
+          className="text-5xl font-bold text-yellow-400 mb-12 text-center"
         >
           Our Commitment to Sustainability
         </motion.h2>
@@ -165,17 +167,17 @@ const AboutPage = () => {
             {
               icon: FaLeaf,
               title: "Eco-Friendly Packaging",
-              description: "We use biodegradable and recyclable materials to reduce our environmental footprint."
+              description: "Leading the industry with 100% biodegradable and recyclable packaging materials."
             },
             {
               icon: FaHeart,
               title: "Supporting Local Farmers",
-              description: "We source ingredients from local farms to promote sustainable agriculture."
+              description: "Direct partnerships with local farmers ensuring fresh, sustainable ingredients."
             },
             {
               icon: FaClock,
-              title: "Reducing Food Waste",
-              description: "We partner with food banks to donate excess food and minimize waste."
+              title: "Zero Food Waste",
+              description: "Strategic partnerships with food banks and innovative waste reduction programs."
             }
           ].map((item, index) => (
             <motion.div
@@ -183,9 +185,9 @@ const AboutPage = () => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className="bg-white/10 backdrop-blur-lg rounded-xl p-8 text-center shadow-lg"
+              className="bg-white/10 backdrop-blur-lg rounded-xl p-8 text-center shadow-lg hover:bg-white/15 transition-colors duration-300"
             >
-              <item.icon className="text-yellow-400 text-5xl mx-auto mb-4" />
+              <item.icon className="text-yellow-400 text-6xl mx-auto mb-6" />
               <h3 className="text-2xl font-bold text-white mb-4">{item.title}</h3>
               <p className="text-gray-300 text-lg">{item.description}</p>
             </motion.div>
@@ -194,9 +196,10 @@ const AboutPage = () => {
       </div>
 
       {/* Call to Action Section */}
-      <div className="relative h-[50vh] flex items-center justify-center overflow-hidden">
+      <div className="relative h-[60vh] flex items-center justify-center overflow-hidden">
         <div 
           className="absolute inset-0 bg-[url('/cta-bg.jpg')] bg-cover bg-center opacity-30"
+          style={{ filter: "brightness(0.6)" }}
         />
         <motion.div 
           initial={{ opacity: 0, y: 30 }}
@@ -204,13 +207,19 @@ const AboutPage = () => {
           transition={{ duration: 1 }}
           className="text-center relative z-10"
         >
-          <h2 className="text-5xl font-extrabold text-yellow-400 drop-shadow-lg mb-6">Join Us Today!</h2>
-          <p className="text-xl text-gray-300 max-w-2xl mx-auto px-6 drop-shadow-md mb-8">
-            Experience the best in food delivery. Sign up now and get 20% off your first order!
+          <h2 className="text-6xl font-extrabold text-yellow-400 drop-shadow-lg mb-8">Ready to Join Us?</h2>
+          <p className="text-2xl text-gray-200 max-w-3xl mx-auto px-6 drop-shadow-md mb-10">
+            Begin your culinary journey today! New members receive an exclusive 25% discount on their first order.
           </p>
-          <button className="bg-yellow-400 text-[#09122c] font-semibold py-3 px-8 rounded-full hover:bg-yellow-500 transition-colors duration-300">
-            Get Started
-          </button>
+          <Link href="/contact">
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-yellow-400 text-[#09122c] font-bold text-xl py-4 px-10 rounded-full hover:bg-yellow-500 transition-colors duration-300 shadow-lg"
+            >
+              Get Started
+            </motion.button>
+          </Link>
         </motion.div>
       </div>
     </div>

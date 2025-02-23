@@ -19,13 +19,14 @@ export default function MenuPage() {
     try {
       setLoading(true);
       const mealsData = await Promise.all(
-        Array(9).fill().map(async () => {
+        Array(9).fill().map(async (_, index) => {
           const res = await fetch('https://www.themealdb.com/api/json/v1/1/random.php');
           const data = await res.json();
           return {
             ...data.meals[0],
             price: (Math.random() * (25 - 8) + 8).toFixed(2),
-            quantity: 1
+            quantity: 1,
+            uniqueKey: `${data.meals[0].idMeal}-${pageNumber}-${index}`, // Adding page and index to make the key unique
           };
         })
       );
@@ -120,7 +121,7 @@ export default function MenuPage() {
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.3 }}
               id={`meal-${meal.idMeal}`}
-              key={meal.idMeal} 
+              key={meal.uniqueKey} // Using uniqueKey that combines idMeal, page, and index
               className="group bg-slate-800/50 backdrop-blur-lg rounded-3xl shadow-2xl border border-slate-700/50 
                         hover:border-emerald-400/30 hover:shadow-emerald-400/10"
             >
