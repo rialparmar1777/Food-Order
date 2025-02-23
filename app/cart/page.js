@@ -1,10 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 import { FaTrash, FaChevronLeft, FaSpinner, FaPlus, FaMinus, FaTruck, FaStore, FaLock } from 'react-icons/fa';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY);
 
@@ -74,7 +76,6 @@ const CartPage = () => {
     
     setLoading(true);
     try {
-      // Create payment intent first
       const response = await fetch('/api/create-payment-intent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -128,11 +129,11 @@ const CartPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-20 pb-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-100 to-gray-200 pt-20 pb-8 text-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <button
           onClick={() => checkoutStep === 'cart' ? router.push('/menu') : setCheckoutStep('cart')}
-          className="flex items-center text-indigo-600 hover:text-indigo-800 mb-8"
+          className="flex items-center text-emerald-600 hover:text-emerald-700 mb-8 transition-colors"
         >
           <FaChevronLeft className="mr-2" />
           {checkoutStep === 'cart' ? 'Continue Shopping' : 'Back to Cart'}
@@ -142,12 +143,12 @@ const CartPage = () => {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-16 bg-white rounded-2xl shadow-sm"
+            className="text-center py-16 bg-white rounded-2xl shadow-lg border border-gray-200"
           >
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Your cart is empty</h2>
+            <h2 className="text-3xl font-bold text-gray-800 mb-4">Your cart is empty</h2>
             <button
               onClick={() => router.push('/menu')}
-              className="bg-indigo-600 text-white px-8 py-3 rounded-lg hover:bg-indigo-700 transition-colors"
+              className="bg-emerald-500 text-white px-8 py-3 rounded-lg hover:bg-emerald-600 transition-colors"
             >
               Browse Menu
             </button>
@@ -159,42 +160,46 @@ const CartPage = () => {
                 <AnimatePresence>
                   {cartItems.map((item) => (
                     <motion.div
-                      key={item.id}
+                      key={item.idMeal}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, x: -20 }}
-                      className="bg-white p-6 rounded-xl shadow-sm"
+                      className="bg-white p-6 rounded-xl shadow-md border border-gray-200 hover:border-emerald-500 transition-all duration-300"
                     >
                       <div className="flex items-start gap-6">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-32 h-32 object-cover rounded-lg"
-                        />
+                        <div className="relative w-32 h-32">
+                          <Image
+                            src={item.strMealThumb}
+                            alt={item.strMeal}
+                            fill
+                            className="object-cover rounded-lg ring-2 ring-emerald-500"
+                            unoptimized={true}
+                          />
+                        </div>
                         <div className="flex-1">
-                          <h4 className="text-lg font-semibold">{item.name}</h4>
+                          <h4 className="text-lg font-semibold text-emerald-600">{item.strMeal}</h4>
                           <p className="text-gray-600">Quantity: {item.quantity}</p>
-                          <p className="text-lg font-bold text-indigo-600">
+                          <p className="text-lg font-bold text-emerald-600">
                             ${(item.price * item.quantity).toFixed(2)}
                           </p>
                         </div>
-                        <div className="flex flex-col items-center">
+                        <div className="flex flex-col items-center gap-2">
                           <button
-                            onClick={() => updateQuantity(item.id, 1)}
-                            className="p-2 bg-indigo-600 rounded-lg text-white mb-2"
+                            onClick={() => updateQuantity(item.idMeal, 1)}
+                            className="p-2 bg-emerald-500 rounded-lg text-white hover:bg-emerald-600 transition-colors"
                           >
                             <FaPlus />
                           </button>
                           <button
-                            onClick={() => updateQuantity(item.id, -1)}
-                            className="p-2 bg-red-600 rounded-lg text-white"
+                            onClick={() => updateQuantity(item.idMeal, -1)}
+                            className="p-2 bg-red-500 rounded-lg text-white hover:bg-red-600 transition-colors"
                           >
                             <FaMinus />
                           </button>
                         </div>
                         <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="ml-6 text-red-600 hover:text-red-800"
+                          onClick={() => removeFromCart(item.idMeal)}
+                          className="ml-6 text-red-500 hover:text-red-600 transition-colors"
                         >
                           <FaTrash />
                         </button>
@@ -218,18 +223,18 @@ const CartPage = () => {
               )}
             </div>
 
-            <div className="bg-white p-8 rounded-xl shadow-sm h-fit sticky top-8">
-              <h3 className="text-xl font-semibold mb-6">Order Summary</h3>
+            <div className="bg-white p-8 rounded-xl shadow-md border border-gray-200 h-fit sticky top-8">
+              <h3 className="text-xl font-semibold mb-6 text-emerald-600">Order Summary</h3>
               <div className="space-y-4">
-                <div className="flex justify-between">
+                <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between text-gray-600">
                   <span>Tax (HST 13%)</span>
                   <span>${tax.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between font-bold text-lg pt-4 border-t">
+                <div className="flex justify-between font-bold text-lg pt-4 border-t border-gray-200 text-emerald-600">
                   <span>Total</span>
                   <span>${total.toFixed(2)}</span>
                 </div>
@@ -238,14 +243,14 @@ const CartPage = () => {
               {checkoutStep === 'cart' ? (
                 <button
                   onClick={() => setCheckoutStep('shipping')}
-                  className="w-full bg-indigo-600 text-white py-3 rounded-lg mt-6 hover:bg-indigo-700 transition-colors"
+                  className="w-full bg-emerald-500 text-white py-3 rounded-lg mt-6 hover:bg-emerald-600 transition-colors"
                 >
                   Proceed to Checkout
                 </button>
               ) : (
-                <div className="mt-6">
-                  <FaLock className="inline-block mr-2 text-gray-600" />
-                  <span className="text-sm text-gray-600">Secure SSL Encryption</span>
+                <div className="mt-6 flex items-center justify-center text-gray-500">
+                  <FaLock className="mr-2" />
+                  <span className="text-sm">Secure SSL Encryption</span>
                 </div>
               )}
             </div>
@@ -282,16 +287,16 @@ const CheckoutForm = ({
 
   return (
     <form onSubmit={handlePayment} className="space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Delivery Method</h3>
+      <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+        <h3 className="text-lg font-semibold mb-4 text-emerald-600">Delivery Method</h3>
         <div className="grid grid-cols-2 gap-4">
           <button
             type="button"
             onClick={() => setDeliveryMethod('delivery')}
-            className={`p-4 rounded-lg border-2 flex items-center justify-center gap-2 ${
+            className={`p-4 rounded-lg border-2 flex items-center justify-center gap-2 transition-all duration-300 ${
               deliveryMethod === 'delivery' 
-                ? 'border-indigo-600 bg-indigo-50 text-indigo-600' 
-                : 'border-gray-200 text-gray-600'
+                ? 'border-emerald-500 bg-emerald-50 text-emerald-600' 
+                : 'border-gray-200 text-gray-500 hover:border-emerald-300'
             }`}
           >
             <FaTruck className="text-xl" />
@@ -300,10 +305,10 @@ const CheckoutForm = ({
           <button
             type="button"
             onClick={() => setDeliveryMethod('pickup')}
-            className={`p-4 rounded-lg border-2 flex items-center justify-center gap-2 ${
+            className={`p-4 rounded-lg border-2 flex items-center justify-center gap-2 transition-all duration-300 ${
               deliveryMethod === 'pickup' 
-                ? 'border-indigo-600 bg-indigo-50 text-indigo-600' 
-                : 'border-gray-200 text-gray-600'
+                ? 'border-emerald-500 bg-emerald-50 text-emerald-600' 
+                : 'border-gray-200 text-gray-500 hover:border-emerald-300'
             }`}
           >
             <FaStore className="text-xl" />
@@ -315,12 +320,12 @@ const CheckoutForm = ({
         )}
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Delivery Time</h3>
+      <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+        <h3 className="text-lg font-semibold mb-4 text-emerald-600">Delivery Time</h3>
         <select
           value={deliveryTime}
           onChange={(e) => setDeliveryTime(e.target.value)}
-          className="w-full p-3 border rounded-lg"
+          className="w-full p-3 bg-white border border-gray-200 rounded-lg text-gray-700 focus:border-emerald-500 focus:outline-none"
         >
           <option value="">Select a time</option>
           {generateTimeSlots().map(time => (
@@ -332,60 +337,60 @@ const CheckoutForm = ({
         )}
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm space-y-4">
-        <h3 className="text-lg font-semibold mb-4">Shipping Information</h3>
+      <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200 space-y-4">
+        <h3 className="text-lg font-semibold mb-4 text-emerald-600">Shipping Information</h3>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+          <label className="block text-sm font-medium text-gray-600 mb-1">Full Name</label>
           <input
             type="text"
             value={shippingInfo.name}
             onChange={(e) => setShippingInfo({ ...shippingInfo, name: e.target.value })}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 bg-white border border-gray-200 rounded-lg text-gray-700 focus:border-emerald-500 focus:outline-none"
           />
           {formErrors.name && <p className="text-red-500 text-sm mt-1">{formErrors.name}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+          <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
           <input
             type="email"
             value={shippingInfo.email}
             onChange={(e) => setShippingInfo({ ...shippingInfo, email: e.target.value })}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 bg-white border border-gray-200 rounded-lg text-gray-700 focus:border-emerald-500 focus:outline-none"
           />
           {formErrors.email && <p className="text-red-500 text-sm mt-1">{formErrors.email}</p>}
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+          <label className="block text-sm font-medium text-gray-600 mb-1">Address</label>
           <input
             type="text"
             value={shippingInfo.address}
             onChange={(e) => setShippingInfo({ ...shippingInfo, address: e.target.value })}
-            className="w-full p-3 border rounded-lg"
+            className="w-full p-3 bg-white border border-gray-200 rounded-lg text-gray-700 focus:border-emerald-500 focus:outline-none"
           />
           {formErrors.address && <p className="text-red-500 text-sm mt-1">{formErrors.address}</p>}
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">City</label>
             <input
               type="text"
               value={shippingInfo.city}
               onChange={(e) => setShippingInfo({ ...shippingInfo, city: e.target.value })}
-              className="w-full p-3 border rounded-lg"
+              className="w-full p-3 bg-white border border-gray-200 rounded-lg text-gray-700 focus:border-emerald-500 focus:outline-none"
             />
             {formErrors.city && <p className="text-red-500 text-sm mt-1">{formErrors.city}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Postal Code</label>
+            <label className="block text-sm font-medium text-gray-600 mb-1">Postal Code</label>
             <input
               type="text"
               value={shippingInfo.postalCode}
               onChange={(e) => setShippingInfo({ ...shippingInfo, postalCode: e.target.value })}
-              className="w-full p-3 border rounded-lg"
+              className="w-full p-3 bg-white border border-gray-200 rounded-lg text-gray-700 focus:border-emerald-500 focus:outline-none"
               placeholder="A1A 1A1"
             />
             {formErrors.postalCode && <p className="text-red-500 text-sm mt-1">{formErrors.postalCode}</p>}
@@ -393,31 +398,31 @@ const CheckoutForm = ({
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm">
-        <h3 className="text-lg font-semibold mb-4">Payment Details</h3>
+      <div className="bg-white p-6 rounded-xl shadow-md border border-gray-200">
+        <h3 className="text-lg font-semibold mb-4 text-emerald-600">Payment Details</h3>
         <div className="space-y-4">
-          <div className="border rounded-lg p-3">
-            <CardNumberElement className="w-full" options={{ style: { base: { fontSize: '16px' } } }} />
+          <div className="border border-gray-200 rounded-lg p-3 focus-within:border-emerald-500">
+            <CardNumberElement className="w-full" options={{ style: { base: { fontSize: '16px', color: '#374151' } } }} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="border rounded-lg p-3">
-              <CardExpiryElement className="w-full" />
+            <div className="border border-gray-200 rounded-lg p-3 focus-within:border-emerald-500">
+              <CardExpiryElement className="w-full" options={{ style: { base: { color: '#374151' } } }} />
             </div>
-            <div className="border rounded-lg p-3">
-              <CardCvcElement className="w-full" />
+            <div className="border border-gray-200 rounded-lg p-3 focus-within:border-emerald-500">
+              <CardCvcElement className="w-full" options={{ style: { base: { color: '#374151' } } }} />
             </div>
           </div>
         </div>
       </div>
 
       {formErrors.message && (
-        <p className="text-red-500 text-center p-4 bg-red-50 rounded-lg">{formErrors.message}</p>
+        <p className="text-red-500 text-center p-4 bg-red-50 rounded-lg border border-red-200">{formErrors.message}</p>
       )}
 
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-indigo-600 text-white py-4 rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+        className="w-full bg-emerald-500 text-white py-4 rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {loading ? (
           <FaSpinner className="animate-spin mx-auto" />
