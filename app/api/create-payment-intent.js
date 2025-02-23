@@ -3,30 +3,67 @@ import Stripe from 'stripe';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export default async function handler(req, res) {
-  if (req.method === 'POST') {
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    return res.status(405).json({ 
+      error: 'Method Not Allowed',
+      message: 'Only POST requests are accepted' 
+    });
+  }
+
+  try {
+    // Validate input parameters
     const { amount, payment_method } = req.body;
     
-    // Validate input parameters
-    if (!amount || !payment_method) {
-      return res.status(400).json({ error: 'Amount and Payment Method are required' });
-    }
-
-    try {
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: amount, // Ensure the amount is in the smallest currency unit (e.g., cents)
-        currency: 'usd', // You can modify this as per your requirements
-        payment_method: payment_method,
-        confirmation_method: 'manual',
-        confirm: true, // Confirms payment intent right away if the method allows it
+    if (!amount || typeof amount !== 'number' || amount <= 0) {
+      return res.status(400).json({
+        error: 'Invalid Amount',
+        message: 'A valid positive amount is required'
       });
-
-      // Send the clientSecret to the client for confirming the payment
-      res.status(200).json({ clientSecret: paymentIntent.client_secret });
-    } catch (err) {
-      console.error('Stripe Payment Intent Error:', err); // For debugging
-      res.status(500).json({ error: err.message });
     }
-  } else {
-    res.status(405).json({ error: 'Method not allowed' });
+
+    if (!payment_method || typeof payment_method !== 'string') {
+      return res.status(400).json({
+        error: 'Invalid Payment Method',
+        message: 'A valid payment method is required'
+      });
+    }
+
+    // Create payment intent with additional security parameters
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount), // Ensure integer value
+      currency: 'cad', // For Canadian HST
+      payment_method,
+      confirmation_method: 'manual',
+      capture_method: 'automatic',
+      metadata: {
+        integration_check: 'accept_a_payment',
+        hst_rate: '0.13', // Ontario HST rate
+        system: 'food-delivery-app'
+      },
+      payment_method_types: ['card'],
+      shipping_address_collection: {
+        allowed_countries: ['CA']
+      }
+    });
+
+    // Secure response handling
+    return res.status(200).json({
+      clientSecret: paymentIntent.client_secret,
+      id: paymentIntent.id,
+      amount: paymentIntent.amount,
+      currency: paymentIntent.currency
+    });
+
+  } catch (err) {
+    // Enhanced error logging
+    console.error(`Stripe Error [${err.type}]:`, err.raw?.message || err.message);
+    
+    // Security: Don't expose Stripe error details to client
+    const serverError = err.raw || err;
+    return res.status(500).json({
+      error: 'Payment Processing Error',
+      message: 'Could not process payment. Please try again.'
+    });
   }
 }

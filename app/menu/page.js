@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { motion } from 'framer-motion';
+import AddToCartButton from '../../components/AddToCartButton'; // Fixed import path
 
 export default function MenuPage() {
   const [meals, setMeals] = useState([]);
@@ -15,12 +17,16 @@ export default function MenuPage() {
   const fetchMeals = async (pageNumber) => {
     try {
       setLoading(true);
-      // Fetch 9 random meals from TheMealDB API
       const mealsData = await Promise.all(
         Array(9).fill().map(async () => {
           const res = await fetch('https://www.themealdb.com/api/json/v1/1/random.php');
           const data = await res.json();
-          return data.meals[0];
+          // Add price and id fields required for cart functionality
+          return {
+            ...data.meals[0],
+            price: parseFloat((Math.random() * (30 - 10) + 10).toFixed(2)), // Random price between 10-30
+            id: data.meals[0].idMeal // Use meal ID as item ID
+          };
         })
       );
       setMeals(prevMeals => [...prevMeals, ...mealsData]);
@@ -29,36 +35,6 @@ export default function MenuPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const addToCart = (meal) => {
-    const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const existingItem = existingCart.find(item => item.id === meal.idMeal);
-    
-    let updatedCart;
-    if (existingItem) {
-      updatedCart = existingCart.map(item => 
-        item.id === meal.idMeal 
-          ? {...item, quantity: item.quantity + 1}
-          : item
-      );
-    } else {
-      updatedCart = [...existingCart, {
-        id: meal.idMeal,
-        name: meal.strMeal,
-        price: (Math.random() * (25 - 8) + 8).toFixed(2),
-        image: meal.strMealThumb,
-        quantity: 1
-      }];
-    }
-
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-    
-    const element = document.getElementById(`meal-${meal.idMeal}`);
-    element.classList.add('scale-105');
-    setTimeout(() => element.classList.remove('scale-105'), 200);
-    
-    router.push('/cart');
   };
 
   if (loading) {
@@ -79,7 +55,6 @@ export default function MenuPage() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900">
-      {/* Parallax Header */}
       <div className="relative h-[60vh] overflow-hidden">
         <div className="absolute inset-0 bg-black/40 z-10"></div>
         <div 
@@ -97,7 +72,6 @@ export default function MenuPage() {
         </div>
       </div>
 
-      {/* Meal Grid */}
       <div className="container mx-auto px-4 py-24 -mt-40 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 hover:[&>*]:opacity-50 
                         [&>*:hover]:opacity-100 [&>*:hover]:scale-105 transition-all duration-300">
@@ -115,51 +89,29 @@ export default function MenuPage() {
                   alt={meal.strMeal}
                   className="w-full h-full object-cover transform group-hover:scale-110 group-hover:rotate-2 transition-transform duration-700"
                 />
-                <div className="absolute top-4 right-4 flex flex-col gap-2">
-                  <div className="bg-emerald-400/20 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg">
-                    <span className="text-emerald-400 font-bold text-xl">
-                      ${(Math.random() * (25 - 8) + 8).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="bg-cyan-400/20 backdrop-blur-sm px-4 py-2 rounded-full">
-                    <span className="text-cyan-400 text-sm font-medium">
-                      ★ {(Math.random() * 2 + 3).toFixed(1)}
-                    </span>
-                  </div>
-                </div>
               </div>
               
               <div className="p-8">
-                <div className="mb-6">
-                  <span className="bg-slate-700/50 text-emerald-400 px-4 py-2 rounded-full text-sm font-medium">
-                    {meal.strArea} Heritage
-                  </span>
-                </div>
                 <h3 className="text-2xl font-bold text-slate-100 mb-4 line-clamp-2 group-hover:text-emerald-400 transition-colors">
                   {meal.strMeal}
                 </h3>
                 <p className="text-slate-400 mb-6 line-clamp-3 leading-relaxed text-sm">
                   {meal.strInstructions?.slice(0, 200)}...
                 </p>
-                <button 
-                  onClick={() => addToCart(meal)}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-900 py-4 rounded-xl
-                           hover:from-emerald-400 hover:to-cyan-400 transform transition-all duration-300
-                           flex items-center justify-center space-x-3 font-bold tracking-wide shadow-lg
-                           hover:shadow-emerald-400/20 relative overflow-hidden"
-                >
-                  <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-20 transition-opacity"></div>
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>Add to Experience</span>
-                </button>
+                <div className="text-emerald-400 font-bold text-xl mb-4">
+                  ${meal.price}
+                </div>
+                <AddToCartButton item={{
+                  id: meal.id,
+                  name: meal.strMeal,
+                  price: meal.price,
+                  image: meal.strMealThumb
+                }} />
               </div>
             </div>
           ))}
         </div>
 
-        {/* Load More Button */}
         <div className="fixed bottom-8 right-8 z-50">
           <button 
             onClick={() => setPage(prevPage => prevPage + 1)}
@@ -172,21 +124,6 @@ export default function MenuPage() {
             </svg>
           </button>
         </div>
-      </div>
-
-      {/* Animated Background Elements */}
-      <div className="fixed inset-0 z-0 opacity-20 pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <div 
-            key={i}
-            className="absolute w-1 h-1 bg-emerald-400 rounded-full animate-float"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animationDelay: `${i * 0.5}s`
-            }}
-          ></div>
-        ))}
       </div>
     </main>
   );
