@@ -1,135 +1,118 @@
-'use client'
-
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { FaSignInAlt, FaEnvelope, FaLock, FaSpinner } from 'react-icons/fa';
+import toast from 'react-hot-toast';
+import Link from 'next/link';
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: ''
-  })
-  const [error, setError] = useState('')
-  const router = useRouter()
+  });
+  const [errors, setErrors] = useState({});
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
-  }
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) newErrors.email = 'Valid email required';
+    if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
+    return newErrors;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        })
-      })
-
-      if (res.ok) {
-        router.push('/dashboard') // Redirect to dashboard after successful login
-      } else {
-        const data = await res.json()
-        setError(data.message || 'Login failed')
-      }
-    } catch (err) {
-      setError('An error occurred during login')
+    e.preventDefault();
+    const formErrors = validateForm();
+    if (Object.keys(formErrors).length > 0) {
+      setErrors(formErrors);
+      toast.error('Please fix the errors in the form');
+      return;
     }
-  }
+
+    setLoading(true);
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
+      }
+
+      toast.success('Login successful! Redirecting...');
+      router.push('/menu');
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Sign in to your account
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link href="/register" className="font-medium text-orange-600 hover:text-orange-500">
-              create a new account
-            </Link>
-          </p>
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 border border-emerald-100">
+        <div className="text-center mb-8">
+          <div className="bg-emerald-100 w-max p-4 rounded-full mx-auto">
+            <FaSignInAlt className="text-3xl text-emerald-600" />
+          </div>
+          <h1 className="text-3xl font-bold text-gray-800 mt-4">Welcome Back</h1>
+          <p className="text-gray-600 mt-2">Sign in to continue your food journey</p>
         </div>
 
-        {error && (
-          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-            <span className="block sm:inline">{error}</span>
-          </div>
-        )}
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <div className="relative">
+              <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
-                id="email"
-                name="email"
                 type="email"
-                autoComplete="email"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
-                placeholder="Email address"
                 value={formData.email}
-                onChange={handleChange}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none ${
+                  errors.email ? 'border-red-300' : 'border-gray-200 focus:border-emerald-500'
+                }`}
+                placeholder="john@example.com"
               />
             </div>
-            
-            <div className="mt-2">
-              <label htmlFor="password" className="sr-only">Password</label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-orange-500 focus:border-orange-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
-              </label>
-            </div>
-
-            <div className="text-sm">
-              <Link href="/forgot-password" className="font-medium text-orange-600 hover:text-orange-500">
-                Forgot your password?
-              </Link>
-            </div>
+            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
           </div>
 
           <div>
-            <button
-              type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
-            >
-              Sign in
-            </button>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <div className="relative">
+              <FaLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input
+                type="password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none ${
+                  errors.password ? 'border-red-300' : 'border-gray-200 focus:border-emerald-500'
+                }`}
+                placeholder="••••••••"
+              />
+            </div>
+            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors font-semibold disabled:opacity-50"
+          >
+            {loading ? <FaSpinner className="animate-spin mx-auto" /> : 'Sign In'}
+          </button>
+
+          <div className="text-center mt-4">
+            <Link href="/register" className="text-emerald-600 hover:text-emerald-700 text-sm font-semibold">
+              Don't have an account? Register here
+            </Link>
           </div>
         </form>
       </div>
     </div>
-  )
+  );
 }
