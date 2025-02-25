@@ -3,8 +3,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
 
 export default function MenuPage() {
+  const { data: session } = useSession();
   const [meals, setMeals] = useState([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -38,35 +40,64 @@ export default function MenuPage() {
     }
   };
 
-  const addToCart = (meal) => {
-    const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-    const existingItemIndex = existingCart.findIndex(item => item.idMeal === meal.idMeal);
-    
-    if (existingItemIndex >= 0) {
-      existingCart[existingItemIndex].quantity += 1;
-    } else {
-      existingCart.push({
-        ...meal,
-        quantity: 1,
-        imageUrl: meal.strMealThumb // Save image URL
-      });
-    }
+  const addToCart = async (meal) => {
+    try {
+      // Get existing cart from localStorage
+      const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
+      
+      // Check if item already exists
+      const existingItemIndex = existingCart.findIndex(item => item.idMeal === meal.idMeal);
+      
+      let updatedCart;
+      if (existingItemIndex >= 0) {
+        updatedCart = existingCart.map((item, index) => 
+          index === existingItemIndex 
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      } else {
+        updatedCart = [...existingCart, {
+          idMeal: meal.idMeal,
+          strMeal: meal.strMeal,
+          strMealThumb: meal.strMealThumb,
+          price: meal.price,
+          quantity: 1
+        }];
+      }
 
-    localStorage.setItem('cart', JSON.stringify(existingCart));
-    
-    // Show "Added to Cart" message
-    setAddedToCart(prev => ({
-      ...prev,
-      [meal.idMeal]: true
-    }));
+      // Save to localStorage
+      localStorage.setItem('cart', JSON.stringify(updatedCart));
 
-    // Reset message after 2 seconds
-    setTimeout(() => {
+      // If user is logged in, sync with database
+      if (session?.user?.id) {
+        await fetch('/api/cart', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: session.user.id,
+            items: updatedCart
+          }),
+        });
+      }
+
+      // Show success message
       setAddedToCart(prev => ({
         ...prev,
-        [meal.idMeal]: false
+        [meal.idMeal]: true
       }));
-    }, 2000);
+
+      setTimeout(() => {
+        setAddedToCart(prev => ({
+          ...prev,
+          [meal.idMeal]: false
+        }));
+      }, 2000);
+
+    } catch (error) {
+      console.error('Error adding to cart:', error);
+    }
   };
 
   if (loading) {

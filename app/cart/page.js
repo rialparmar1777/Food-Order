@@ -24,7 +24,7 @@ const CartPage = () => {
   const stripe = useStripe();
   const elements = useElements();
   const [checkoutStep, setCheckoutStep] = useState('cart');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [deliveryMethod, setDeliveryMethod] = useState('delivery');
   const [deliveryTime, setDeliveryTime] = useState('');
   const [formErrors, setFormErrors] = useState({});
@@ -49,28 +49,65 @@ const CartPage = () => {
     { subtotal: 0, tax: 0, total: 0 }
   );
 
+  // Load cart items
   useEffect(() => {
-    const fetchCart = async () => {
-      if (session?.user.id) {
-        const response = await fetch(`/api/cart?userId=${session.user.id}`);
-        const data = await response.json();
-        setCartItems(data);
+    const loadCart = async () => {
+      try {
+        if (session?.user?.id) {
+          // Fetch cart from database if user is logged in
+          const response = await fetch(`/api/cart?userId=${session.user.id}`);
+          const data = await response.json();
+          if (Array.isArray(data) && data.length > 0) {
+            // Transform database items to match localStorage format
+            const items = data[0].items.map(item => ({
+              idMeal: item.mealId,
+              strMeal: item.name,
+              strMealThumb: item.image,
+              price: item.price,
+              quantity: item.quantity
+            }));
+            setCartItems(items);
+            // Update localStorage to match database
+            localStorage.setItem('cart', JSON.stringify(items));
+          }
+        } else {
+          // Load from localStorage if user is not logged in
+          const savedCart = localStorage.getItem('cart');
+          if (savedCart) {
+            setCartItems(JSON.parse(savedCart));
+          }
+        }
+      } catch (error) {
+        console.error('Error loading cart:', error);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchCart();
+
+    loadCart();
   }, [session]);
 
-  const updateCart = async (items) => {
-    if (!session?.user.id) return;
-    await fetch('/api/cart', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId: session.user.id,
-        items
-      })
-    });
-    setCartItems(items);
+  // Update cart items
+  const updateCart = async (updatedItems) => {
+    try {
+      setCartItems(updatedItems);
+      localStorage.setItem('cart', JSON.stringify(updatedItems));
+
+      if (session?.user?.id) {
+        await fetch('/api/cart', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: session.user.id,
+            items: updatedItems
+          }),
+        });
+      }
+    } catch (error) {
+      console.error('Error updating cart:', error);
+    }
   };
 
   const validateForm = () => {
@@ -132,7 +169,9 @@ const CartPage = () => {
 
   const updateQuantity = (id, change) => {
     const updatedCart = cartItems.map(item =>
-      item.idMeal === id ? { ...item, quantity: Math.max(1, item.quantity + change) } : item
+      item.idMeal === id 
+        ? { ...item, quantity: Math.max(1, item.quantity + change) }
+        : item
     );
     updateCart(updatedCart);
   };

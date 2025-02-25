@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { FaUserPlus, FaEnvelope, FaLock, FaUser, FaSpinner } from 'react-icons/fa';
 import toast from 'react-hot-toast';
@@ -14,7 +15,12 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: ''
   });
-  const [errors, setErrors] = useState({});
+  const [error, setError] = useState('');
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -27,34 +33,54 @@ export default function RegisterPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const formErrors = validateForm();
-    if (Object.keys(formErrors).length > 0) {
-      setErrors(formErrors);
-      toast.error('Please fix the errors in the form');
+    setLoading(true);
+    setError('');
+
+    // Validate form
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setError(Object.values(errors)[0]);
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
     try {
-      const response = await fetch('/api/register', {
+      const registerResponse = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
+      const data = await registerResponse.json();
+
+      if (!registerResponse.ok) {
+        throw new Error(data.error || 'Registration failed');
       }
 
-      toast.success('Registration successful! Redirecting...');
+      toast.success('Registration successful! Please log in.');
       router.push('/login');
-    } catch (err) {
-      toast.error(err.message);
+
+    } catch (error) {
+      console.error('Registration error:', error);
+      toast.error(error.message || 'Something went wrong');
+      setError(error.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
   };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  if (!mounted) {
+    return null; // or a loading spinner
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center p-4">
@@ -67,22 +93,25 @@ export default function RegisterPage() {
           <p className="text-gray-600 mt-2">Join our foodie community</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" suppressHydrationWarning>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
             <div className="relative">
               <FaUser className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
+                name="name"
                 value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                onChange={handleChange}
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none ${
-                  errors.name ? 'border-red-300' : 'border-gray-200 focus:border-emerald-500'
+                  error ? 'border-red-300' : 'border-gray-200 focus:border-emerald-500'
                 }`}
                 placeholder="John Doe"
+                required
+                suppressHydrationWarning
               />
             </div>
-            {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
           </div>
 
           <div>
@@ -91,15 +120,18 @@ export default function RegisterPage() {
               <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="email"
+                name="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={handleChange}
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none ${
-                  errors.email ? 'border-red-300' : 'border-gray-200 focus:border-emerald-500'
+                  error ? 'border-red-300' : 'border-gray-200 focus:border-emerald-500'
                 }`}
                 placeholder="john@example.com"
+                required
+                suppressHydrationWarning
               />
             </div>
-            {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
           </div>
 
           <div>
@@ -108,15 +140,18 @@ export default function RegisterPage() {
               <FaLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="password"
+                name="password"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={handleChange}
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none ${
-                  errors.password ? 'border-red-300' : 'border-gray-200 focus:border-emerald-500'
+                  error ? 'border-red-300' : 'border-gray-200 focus:border-emerald-500'
                 }`}
                 placeholder="••••••••"
+                required
+                suppressHydrationWarning
               />
             </div>
-            {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password}</p>}
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
           </div>
 
           <div>
@@ -125,21 +160,25 @@ export default function RegisterPage() {
               <FaLock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
               <input
                 type="password"
+                name="confirmPassword"
                 value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                onChange={handleChange}
                 className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:outline-none ${
-                  errors.confirmPassword ? 'border-red-300' : 'border-gray-200 focus:border-emerald-500'
+                  error ? 'border-red-300' : 'border-gray-200 focus:border-emerald-500'
                 }`}
                 placeholder="••••••••"
+                required
+                suppressHydrationWarning
               />
             </div>
-            {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword}</p>}
+            {error && <p className="text-red-500 text-sm mt-1">{error}</p>}
           </div>
 
           <button
             type="submit"
             disabled={loading}
             className="w-full bg-emerald-600 text-white py-3 rounded-lg hover:bg-emerald-700 transition-colors font-semibold disabled:opacity-50"
+            suppressHydrationWarning
           >
             {loading ? <FaSpinner className="animate-spin mx-auto" /> : 'Create Account'}
           </button>
