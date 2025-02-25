@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react'; // Import useSession
 import { Elements } from '@stripe/react-stripe-js';
 import { CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
@@ -18,9 +19,10 @@ const CartPageWrapper = () => (
 
 const CartPage = () => {
   const router = useRouter();
+  const { data: session } = useSession();
+  const [cartItems, setCartItems] = useState([]);
   const stripe = useStripe();
   const elements = useElements();
-  const [cartItems, setCartItems] = useState([]);
   const [checkoutStep, setCheckoutStep] = useState('cart');
   const [loading, setLoading] = useState(false);
   const [deliveryMethod, setDeliveryMethod] = useState('delivery');
@@ -48,14 +50,28 @@ const CartPage = () => {
   );
 
   useEffect(() => {
-    const handleStorageChange = () => {
-      const items = JSON.parse(localStorage.getItem('cart') || '[]');
-      setCartItems(items);
+    const fetchCart = async () => {
+      if (session?.user.id) {
+        const response = await fetch(`/api/cart?userId=${session.user.id}`);
+        const data = await response.json();
+        setCartItems(data);
+      }
     };
-    handleStorageChange();
-    window.addEventListener('cart-updated', handleStorageChange);
-    return () => window.removeEventListener('cart-updated', handleStorageChange);
-  }, []);
+    fetchCart();
+  }, [session]);
+
+  const updateCart = async (items) => {
+    if (!session?.user.id) return;
+    await fetch('/api/cart', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: session.user.id,
+        items
+      })
+    });
+    setCartItems(items);
+  };
 
   const validateForm = () => {
     const errors = {};
@@ -115,21 +131,15 @@ const CartPage = () => {
   };
 
   const updateQuantity = (id, change) => {
-    const updatedCart = cartItems.map(item => {
-      if (item.idMeal === id) {
-        const newQuantity = Math.max(1, item.quantity + change);
-        return { ...item, quantity: newQuantity };
-      }
-      return item;
-    });
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-    setCartItems(updatedCart);
+    const updatedCart = cartItems.map(item =>
+      item.idMeal === id ? { ...item, quantity: Math.max(1, item.quantity + change) } : item
+    );
+    updateCart(updatedCart);
   };
 
   const removeFromCart = (id) => {
     const updatedCart = cartItems.filter(item => item.idMeal !== id);
-    localStorage.setItem('cart', JSON.stringify(updatedCart));
-    setCartItems(updatedCart);
+    updateCart(updatedCart);
   };
 
   return (
@@ -234,7 +244,7 @@ const CartPage = () => {
                   <span>Subtotal</span>
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-600">
+                <div className="flex justify-between text-gray-600">  
                   <span>Tax (HST 13%)</span>
                   <span>${tax.toFixed(2)}</span>
                 </div>
