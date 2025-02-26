@@ -1,4 +1,5 @@
-"use client";
+'use client';
+
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { FaShoppingCart } from "react-icons/fa";
@@ -8,133 +9,14 @@ import "react-responsive-carousel/lib/styles/carousel.min.css";
 import styled from "styled-components";
 import Navbar from "./Navbar";
 
-// Navbar Styled Components
-const NavbarContainer = styled.nav`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 50;
-  background: ${({ $scrolled }) =>
-    $scrolled ? "rgba(255, 255, 255, 0.6)" : "transparent"};
-  backdrop-filter: ${({ $scrolled }) =>
-    $scrolled ? "blur(12px)" : "blur(5px)"};
-  box-shadow: ${({ $scrolled }) =>
-    $scrolled ? "0 8px 32px rgba(0, 0, 0, 0.1)" : "none"};
-  padding: 1rem 2rem;
-  transition: all 0.3s ease-in-out;
-  border-bottom: ${({ $scrolled }) =>
-    $scrolled ? "1px solid rgba(255, 255, 255, 0.2)" : "none"};
-`;
-
-const NavbarContent = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 1200px;
-  margin: 0 auto;
-`;
-
-const NavLinks = styled.div`
-  display: flex;
-  gap: 2rem;
-
-  a {
-    color: #fff;
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.3s ease;
-    position: relative;
-
-    &:hover {
-      color: #ffd700;
-    }
-
-    &::after {
-      content: "";
-      position: absolute;
-      left: 50%;
-      bottom: -4px;
-      width: 0;
-      height: 2px;
-      background: #ffd700;
-      transition: all 0.3s ease;
-    }
-
-    &:hover::after {
-      width: 100%;
-      left: 0;
-    }
-  }
-`;
-
-const CartIcon = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const OverlayText = styled(motion.div)`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  text-align: center;
-  color: white;
-
-  h2 {
-    font-size: 3rem;
-    font-weight: bold;
-    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
-  }
-
-  p {
-    margin-top: 1rem;
-    font-size: 1.2rem;
-  }
-
-  .cta {
-    margin-top: 2rem;
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-
-    a {
-      padding: 0.75rem 1.5rem;
-      border-radius: 30px;
-      font-size: 1rem;
-      font-weight: bold;
-      transition: all 0.3s ease;
-    }
-
-    .primary {
-      background: #ffd700;
-      color: #000;
-      &:hover {
-        background: #e6c200;
-      }
-    }
-
-    .secondary {
-      border: 2px solid white;
-      color: white;
-      &:hover {
-        background: white;
-        color: black;
-      }
-    }
-  }
-`;
-
-const CarouselContainer = styled.div`
-  width: 100%;
-  height: 100vh;
-
-  .carousel .slide img {
-    height: 100vh;
-    object-fit: cover;
-    filter: brightness(0.8);
-  }
-`;
+// Pre-calculate particle positions with rounded values
+const particlePositions = [...Array(30)].map((_, i) => {
+  const angle = Math.round((i / 30) * 360); // Use degrees instead of radians
+  const radius = 40 + (i % 3) * 20;
+  const x = Math.round(50 + radius * Math.cos(angle * Math.PI / 180));
+  const y = Math.round(50 + radius * Math.sin(angle * Math.PI / 180));
+  return { x, y };
+});
 
 // Hero Section Component
 const HeroSection = () => {
@@ -142,7 +24,7 @@ const HeroSection = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const scrollToMenu = () => {
-    const menuSection = document.getElementById('menu'); // Make sure your menu section has this ID
+    const menuSection = document.getElementById('menu');
     if (menuSection) {
       menuSection.scrollIntoView({ behavior: 'smooth' });
     }
@@ -206,25 +88,24 @@ const HeroSection = () => {
           </p>
           <div className="flex justify-center gap-4">
             <Link href="/menu">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={scrollToMenu}
-              className="bg-gradient-to-r from-yellow-400 to-amber-500 text-black px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
-            >
-              Order Now
-            </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={scrollToMenu}
+                className="bg-gradient-to-r from-yellow-400 to-amber-500 text-black px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
+              >
+                Order Now
+              </motion.button>
             </Link>
             <Link href="/about">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="border-2 border-white text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white hover:text-black transition-all"
-            >
-              Learn More
-            
-          </motion.button>
-          </Link>
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="border-2 border-white text-white px-8 py-4 rounded-full text-lg font-semibold hover:bg-white hover:text-black transition-all"
+              >
+                Learn More
+              </motion.button>
+            </Link>
           </div>
         </motion.div>
       </div>
@@ -243,22 +124,24 @@ const HeroSection = () => {
 
       {/* Subtle Floating Particles */}
       <div className="absolute inset-0 pointer-events-none">
-        {[...Array(30)].map((_, i) => (
+        {particlePositions.map((position, i) => (
           <motion.div
             key={i}
             className="absolute w-1 h-1 bg-white rounded-full"
             style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
+              left: `${position.x}%`,
+              top: `${position.y}%`,
+              transform: 'translate(-50%, -50%)'
             }}
             animate={{
-              y: [0, -100, 0],
+              y: [-10, 10, -10],
               opacity: [0.3, 0.8, 0.3],
             }}
             transition={{
-              duration: Math.random() * 5 + 5,
+              duration: 4,
               repeat: Infinity,
               ease: "linear",
+              delay: i * 0.1,
             }}
           />
         ))}
@@ -267,4 +150,4 @@ const HeroSection = () => {
   );
 };
 
-export default HeroSection;
+export default HeroSection; 

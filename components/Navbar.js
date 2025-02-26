@@ -1,4 +1,5 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
@@ -9,10 +10,172 @@ import {
   FaHome,
   FaUtensils,
   FaInfoCircle,
-  FaPhoneAlt
+  FaPhoneAlt,
+  FaUserCircle
 } from 'react-icons/fa';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import styled from 'styled-components';
+
+// Styled components
+const NavbarWrapper = styled.nav`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  background: ${({ $scrolled }) =>
+    $scrolled 
+      ? "rgba(0, 0, 0, 0.9)"
+      : "rgba(255, 255, 255, 0.1)"};
+  backdrop-filter: ${({ $scrolled }) =>
+    $scrolled 
+      ? "blur(16px)" 
+      : "blur(8px)"};
+  box-shadow: ${({ $scrolled }) =>
+    $scrolled 
+      ? "0 8px 32px rgba(0, 0, 0, 0.3)"
+      : "0 4px 16px rgba(255, 255, 255, 0.1)"};
+  border: ${({ $scrolled }) =>
+    $scrolled
+      ? "1px solid rgba(255, 255, 255, 0.1)"
+      : "1px solid rgba(255, 255, 255, 0.2)"};
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: var(--font-geist-sans);
+`;
+
+const NavContent = styled.div`
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const NavLinks = styled.div`
+  display: none;
+  gap: 2.5rem;
+  
+  @media (min-width: 768px) {
+    display: flex;
+  }
+
+  a {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    padding: 0.5rem 0;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    font-family: var(--font-geist-sans);
+    letter-spacing: -0.02em;
+
+    &:hover {
+      color: #ffd700;
+      transform: translateY(-2px);
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -2px;
+      width: 0;
+      height: 2px;
+      background: #ffd700;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 2px;
+      box-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+    }
+
+    &:hover::after {
+      width: 100%;
+      left: 0;
+    }
+  }
+`;
+
+const MobileMenuButton = styled(motion.button)`
+  color: rgba(255, 255, 255, 0.9);
+  @media (min-width: 768px) {
+    display: none;
+  }
+`;
+
+const Logo = styled(motion.div)`
+  font-size: 1.75rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 2px 10px rgba(255, 215, 0, 0.4);
+  letter-spacing: -0.03em;
+  font-family: var(--font-geist-sans);
+`;
+
+const AuthSection = styled.div`
+  display: none;
+  @media (min-width: 768px) {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+`;
+
+const CartButton = styled(motion.div)`
+  position: relative;
+  cursor: pointer;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+`;
+
+const CartCount = styled(motion.div)`
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: linear-gradient(135deg, #ff4444, #ff0000);
+  color: white;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  box-shadow: 0 2px 6px rgba(255, 0, 0, 0.4);
+`;
+
+const MobileMenuContainer = styled(motion.div)`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.95);
+  backdrop-filter: blur(12px);
+  padding: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  font-family: var(--font-geist-sans);
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+`;
+
+const UserProfile = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: white;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  
+  .profile-icon {
+    width: 32px;
+    height: 32px;
+    color: #ffd700;
+    filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.4));
+  }
+`;
 
 const Navbar = () => {
   const { data: session } = useSession();
@@ -20,307 +183,171 @@ const Navbar = () => {
   const [cartItemCount, setCartItemCount] = useState(0);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Cart icon animation values
-  const cartIconRotation = useMotionValue(0);
-  const cartIconScale = useTransform(cartIconRotation, [0, 1], [1, 1.2]);
-
-  // Update cart count from localStorage
-  const updateCartCount = () => {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]');
-    setCartItemCount(cart.reduce((total, item) => total + item.quantity, 0));
-  };
-
   useEffect(() => {
-    updateCartCount();
-
-    const handleStorageChange = () => updateCartCount();
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('cart-updated', handleStorageChange);
-
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const updateCartCount = () => {
+      const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+      setCartItemCount(cart.reduce((total, item) => total + item.quantity, 0));
+    };
+
+    updateCartCount();
+    window.addEventListener('storage', updateCartCount);
+    window.addEventListener('cart-updated', updateCartCount);
 
     return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('cart-updated', handleStorageChange);
+      window.removeEventListener('storage', updateCartCount);
+      window.removeEventListener('cart-updated', updateCartCount);
     };
   }, []);
 
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (isMenuOpen && !e.target.closest('.mobile-menu')) {
-        setIsMenuOpen(false);
-      }
-    };
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
-  }, [isMenuOpen]);
-
-  const MobileMenu = () => (
-    <motion.div
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ 
-        opacity: 1, 
-        y: 0,
-        transition: { type: 'spring', stiffness: 300, damping: 25 }
-      }}
-      exit={{ 
-        opacity: 0, 
-        y: -20,
-        transition: { duration: 0.2 }
-      }}
-      className="md:hidden absolute top-16 left-0 w-full bg-white/95 backdrop-blur-lg shadow-lg py-4 px-6 space-y-4 mobile-menu"
-    >
-      <NavLink href="/" icon={<FaHome />} text="Home" />
-      <NavLink href="/menu" icon={<FaUtensils />} text="Menu" />
-      <NavLink href="/about" icon={<FaInfoCircle />} text="About" />
-      <NavLink href="/contact" icon={<FaPhoneAlt />} text="Contact" />
-      
-      <div className="pt-4 border-t border-gray-200">
-        {session ? (
-          <div className="space-y-4">
-            <motion.div 
-              className="flex items-center gap-2 text-gray-700"
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-            >
-              <FaUser className="text-yellow-500" />
-              <span>{session.user.name}</span>
-            </motion.div>
-            <motion.button
-              onClick={() => signOut()}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-full py-2 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-            >
-              Logout
-            </motion.button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            <motion.button
-              onClick={() => {
-                signIn();
-                setIsMenuOpen(false);
-              }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="w-full py-2 px-4 bg-yellow-400 text-black rounded-lg hover:bg-yellow-500 transition-colors"
-            >
-              Login
-            </motion.button>
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Link
-                href="/register"
-                className="block text-center py-2 px-4 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                Register
-              </Link>
-            </motion.div>
-          </div>
-        )}
-      </div>
-    </motion.div>
-  );
-
-  const NavLink = ({ href, icon, text }) => (
-    <motion.div
-      whileHover={{ x: 5 }}
-      transition={{ type: 'spring', stiffness: 300 }}
-    >
-      <Link
-        href={href}
-        className="flex items-center gap-3 text-gray-700 hover:text-yellow-500 py-2"
-        onClick={() => setIsMenuOpen(false)}
-      >
-        <motion.span whileHover={{ scale: 1.1 }}>
-          {icon}
-        </motion.span>
-        <span className="font-medium">{text}</span>
-      </Link>
-    </motion.div>
-  );
+  const navLinks = [
+    { href: '/', text: 'Home', icon: <FaHome /> },
+    { href: '/menu', text: 'Menu', icon: <FaUtensils /> },
+    { href: '/about', text: 'About', icon: <FaInfoCircle /> },
+    { href: '/contact', text: 'Contact', icon: <FaPhoneAlt /> }
+  ];
 
   return (
-    <nav className={`fixed w-full z-50 transition-all duration-300 backdrop-blur-lg border-b border-white/20 bg-white/10 ${isScrolled ? 'shadow-md' : 'shadow-none'}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Mobile Menu Button */}
-          <motion.button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="md:hidden p-2 text-white hover:text-yellow-400"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-          >
-            {isMenuOpen ? (
-              <motion.div
-                animate={{ rotate: 180 }}
-                transition={{ type: 'spring' }}
-              >
-                <FaTimes className="h-6 w-6" />
-              </motion.div>
+    <NavbarWrapper $scrolled={isScrolled}>
+      <NavContent>
+        <MobileMenuButton
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+        >
+          {isMenuOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+        </MobileMenuButton>
+
+        <Logo
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Link href="/">FOOD_ORDER</Link>
+        </Logo>
+
+        <NavLinks>
+          {navLinks.map(({ href, text }) => (
+            <Link key={href} href={href}>{text}</Link>
+          ))}
+        </NavLinks>
+
+        <div className="flex items-center gap-4">
+          <AuthSection>
+            {session ? (
+              <UserProfile>
+                <FaUserCircle className="profile-icon" />
+                <span>{session.user.name}</span>
+                <motion.button
+                  onClick={() => signOut()}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow-lg hover:shadow-xl transition-all"
+                >
+                  Logout
+                </motion.button>
+              </UserProfile>
             ) : (
-              <FaBars className="h-6 w-6" />
-            )}
-          </motion.button>
-
-          {/* Logo with shine effect */}
-          <motion.div
-            className="flex-shrink-0"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <Link href="/" className="text-2xl font-bold text-yellow-400 drop-shadow-lg relative overflow-hidden">
-              <motion.span
-                className="block relative z-10"
-                whileHover={{
-                  background: [
-                    'linear-gradient(90deg, #facc15 0%, #fde047 50%, #facc15 100%)',
-                    'linear-gradient(90deg, #facc15 0%, #fde047 100%)'
-                  ],
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  transition: { duration: 0.5, repeat: Infinity }
-                }}
-              >
-                FOOD_ORDER
-              </motion.span>
-              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/30 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
-            </Link>
-          </motion.div>
-
-          {/* Desktop Navigation Links */}
-          <div className="hidden md:flex items-center space-x-8">
-            {['/', '/menu', '/about', '/contact'].map((path, index) => (
-              <motion.div
-                key={path}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Link
-                  href={path}
-                  className="text-white hover:text-yellow-400 font-medium transition-colors duration-200 relative group"
+              <>
+                <motion.button
+                  onClick={() => signIn()}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  className="px-4 py-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
                 >
-                  {path === '/' ? 'Home' : 
-                   path === '/menu' ? 'Menu' : 
-                   path === '/about' ? 'About' : 'Contact'}
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-yellow-400 transition-all group-hover:w-full" />
+                  Login
+                </motion.button>
+                <Link href="/register">
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="px-4 py-2 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
+                  >
+                    Register
+                  </motion.button>
                 </Link>
-              </motion.div>
-            ))}
-          </div>
+              </>
+            )}
+          </AuthSection>
 
-          {/* Authentication & Cart */}
-          <div className="flex items-center gap-6">
-            {/* Desktop Auth */}
-            <div className="hidden md:flex items-center gap-4">
-              {session ? (
-                <motion.div 
-                  className="flex items-center gap-4"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                >
-                  <div className="flex items-center gap-2 text-white">
-                    <motion.span
-                      whileHover={{ rotate: 360 }}
-                      transition={{ duration: 0.5 }}
-                    >
-                      <FaUser className="text-yellow-400" />
-                    </motion.span>
-                    <span className="hidden sm:inline">{session.user.name}</span>
-                  </div>
-                  <motion.button
-                    onClick={() => signOut()}
-                    whileHover={{ 
-                      scale: 1.05,
-                      boxShadow: '0 4px 14px rgba(239, 68, 68, 0.25)'
-                    }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-4 py-2 bg-red-500 text-white rounded-lg transition-colors"
-                  >
-                    Logout
-                  </motion.button>
-                </motion.div>
-              ) : (
-                <motion.div 
-                  className="flex items-center gap-4"
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                >
-                  <motion.button
-                    onClick={() => signIn()}
-                    whileHover={{ 
-                      scale: 1.05,
-                      boxShadow: '0 4px 14px rgba(250, 204, 21, 0.25)'
-                    }}
-                    whileTap={{ scale: 0.95 }}
-                    className="px-4 py-2 bg-yellow-400 text-black rounded-lg transition-colors"
-                  >
-                    Login
-                  </motion.button>
-                  <motion.div
-                    whileHover={{ 
-                      scale: 1.05,
-                      boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
-                    }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <Link
-                      href="/register"
-                      className="px-4 py-2 bg-emerald-500 text-white rounded-lg transition-colors block"
-                    >
-                      Register
-                    </Link>
-                  </motion.div>
-                </motion.div>
-              )}
-            </div>
-
-            {/* Cart Icon */}
-            <motion.div 
-              className="flex items-center relative"
-              onHoverStart={() => cartIconRotation.set(1)}
-              onHoverEnd={() => cartIconRotation.set(0)}
-              style={{ scale: cartIconScale }}
-            >
-              <Link href="/cart" className="p-2 hover:bg-white/20 rounded-full transition-all duration-200">
-                <motion.span
-                  animate={{ rotate: cartIconRotation.get() * 15 }}
-                  transition={{ type: 'spring', stiffness: 300 }}
-                >
-                  <FaShoppingCart className="h-6 w-6 text-white hover:text-yellow-400 transition-colors duration-200" />
-                </motion.span>
-              </Link>
+          <CartButton whileHover={{ scale: 1.1 }}>
+            <Link href="/cart">
+              <FaShoppingCart size={24} className="text-white" />
               <AnimatePresence>
                 {cartItemCount > 0 && (
-                  <motion.div
-                    key="cart-count"
+                  <CartCount
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     exit={{ scale: 0 }}
-                    className="absolute top-0 right-0 flex items-center justify-center w-5 h-5 text-xs text-white bg-red-500 rounded-full"
                   >
                     {cartItemCount}
-                  </motion.div>
+                  </CartCount>
                 )}
               </AnimatePresence>
-            </motion.div>
-          </div>
+            </Link>
+          </CartButton>
         </div>
+      </NavContent>
 
-        {/* Mobile Menu */}
-        <AnimatePresence>
-          {isMenuOpen && <MobileMenu />}
-        </AnimatePresence>
-      </div>
-    </nav>
+      <AnimatePresence>
+        {isMenuOpen && (
+          <MobileMenuContainer
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            {navLinks.map(({ href, text, icon }) => (
+              <Link
+                key={href}
+                href={href}
+                className="flex items-center gap-3 py-3 text-white hover:text-yellow-400 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                {icon}
+                <span className="font-semibold">{text}</span>
+              </Link>
+            ))}
+            
+            {!session ? (
+              <div className="mt-6 space-y-3">
+                <button
+                  onClick={() => {
+                    signIn();
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full py-2.5 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
+                >
+                  Login
+                </button>
+                <Link
+                  href="/register"
+                  className="block w-full py-2.5 text-center bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Register
+                </Link>
+              </div>
+            ) : (
+              <div className="mt-6">
+                <button
+                  onClick={() => {
+                    signOut();
+                    setIsMenuOpen(false);
+                  }}
+                  className="w-full py-2.5 bg-gradient-to-r from-red-500 to-red-600 text-white font-semibold rounded-lg shadow-lg hover:shadow-xl transition-all"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </MobileMenuContainer>
+        )}
+      </AnimatePresence>
+    </NavbarWrapper>
   );
 };
 
