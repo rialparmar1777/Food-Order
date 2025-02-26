@@ -1,10 +1,22 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { TagIcon, FireIcon, GiftIcon, SparklesIcon } from '@heroicons/react/24/solid';
 
 const AdvertisementPage = () => {
   const [selectedAd, setSelectedAd] = useState(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check if device is mobile
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const advertisements = [
     {
@@ -77,34 +89,35 @@ const AdvertisementPage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      <div className="container mx-auto px-4 py-16">
+      <div className="container mx-auto px-4 py-8 md:py-16">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-16"
+          className="text-center mb-8 md:mb-16"
         >
-          <h1 className="text-6xl font-bold bg-gradient-to-r from-amber-400 to-pink-500 bg-clip-text text-transparent mb-4">
+          <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-amber-400 to-pink-500 bg-clip-text text-transparent mb-4">
             Featured Promotions
           </h1>
-          <p className="text-gray-300 text-xl">
+          <p className="text-gray-300 text-lg md:text-xl px-4">
             Exclusive deals and premium dining experiences await
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
           <AnimatePresence>
-            {advertisements.map((ad) => (
+            {advertisements.map((ad, index) => (
               <motion.div
                 key={ad.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
                 exit={{ opacity: 0 }}
-                whileHover={{ scale: 1.03 }}
-                className="bg-slate-800/50 backdrop-blur rounded-3xl shadow-xl overflow-hidden group border border-slate-700/50"
+                whileHover={!isMobile ? { scale: 1.03 } : {}}
+                className="bg-slate-800/50 backdrop-blur rounded-2xl md:rounded-3xl shadow-xl overflow-hidden group border border-slate-700/50"
               >
-                <div className="relative h-56 overflow-hidden">
-                  <div className="absolute top-4 left-4 z-10">
-                    <span className="bg-gradient-to-r from-amber-500 to-pink-500 text-white px-4 py-2 rounded-full font-bold text-lg">
+                <div className="relative h-48 md:h-56 overflow-hidden">
+                  <div className="absolute top-2 md:top-4 left-2 md:left-4 z-10">
+                    <span className="bg-gradient-to-r from-amber-500 to-pink-500 text-white px-3 py-1 md:px-4 md:py-2 rounded-full font-bold text-base md:text-lg">
                       {ad.discount}
                     </span>
                   </div>
@@ -112,32 +125,33 @@ const AdvertisementPage = () => {
                     src={ad.image}
                     alt={ad.title}
                     className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent"></div>
                 </div>
 
-                <div className="p-6">
-                  <h3 className="text-2xl font-bold text-white mb-2">{ad.title}</h3>
-                  <p className="text-gray-400 mb-4">{ad.description}</p>
+                <div className="p-4 md:p-6">
+                  <h3 className="text-xl md:text-2xl font-bold text-white mb-2">{ad.title}</h3>
+                  <p className="text-gray-400 text-sm md:text-base mb-4">{ad.description}</p>
 
                   <div className="flex flex-wrap gap-2 mb-4">
                     {ad.tags.map(tag => (
                       <span
                         key={tag}
-                        className="px-3 py-1 bg-slate-700/50 text-amber-400 rounded-full text-sm font-medium flex items-center gap-1"
+                        className="px-2 md:px-3 py-1 bg-slate-700/50 text-amber-400 rounded-full text-xs md:text-sm font-medium flex items-center gap-1"
                       >
-                        <SparklesIcon className="w-4 h-4" />
+                        <SparklesIcon className="w-3 h-3 md:w-4 md:h-4" />
                         {tag}
                       </span>
                     ))}
                   </div>
 
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center justify-between mb-4 md:mb-6">
                     <div>
-                      <span className="text-gray-500 line-through text-lg">${ad.originalPrice}</span>
-                      <span className="text-2xl font-bold text-amber-400 ml-2">${ad.discountedPrice}</span>
+                      <span className="text-gray-500 line-through text-base md:text-lg">${ad.originalPrice}</span>
+                      <span className="text-xl md:text-2xl font-bold text-amber-400 ml-2">${ad.discountedPrice}</span>
                     </div>
-                    <div className="text-sm text-gray-400">
+                    <div className="text-xs md:text-sm text-gray-400">
                       Until {new Date(ad.validUntil).toLocaleDateString()}
                     </div>
                   </div>
@@ -145,9 +159,9 @@ const AdvertisementPage = () => {
                   <motion.button
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setSelectedAd(ad)}
-                    className="w-full bg-gradient-to-r from-amber-500 to-pink-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-amber-500 to-pink-500 text-white py-2 md:py-3 rounded-xl font-semibold active:bg-amber-600 hover:shadow-lg hover:shadow-amber-500/20 transition-all flex items-center justify-center gap-2"
                   >
-                    <FireIcon className="w-5 h-5" />
+                    <FireIcon className="w-4 h-4 md:w-5 md:h-5" />
                     Claim Now
                   </motion.button>
                 </div>
@@ -167,20 +181,20 @@ const AdvertisementPage = () => {
             onClick={() => setSelectedAd(null)}
           >
             <motion.div
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              exit={{ scale: 0.9 }}
-              className="bg-slate-800 rounded-2xl max-w-md w-full p-6 border border-slate-700"
+              initial={{ scale: 0.9, y: 50 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 50 }}
+              className="bg-slate-800 rounded-xl md:rounded-2xl max-w-[90%] md:max-w-md w-full p-4 md:p-6 border border-slate-700"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-2xl font-bold text-white mb-4">Exclusive Offer</h3>
-              <p className="text-gray-300 mb-6">
-                Use code <span className="font-mono bg-slate-700 px-2 py-1 rounded text-amber-400">{`PREMIUM${selectedAd.id}`}</span> at checkout to redeem this offer.
+              <h3 className="text-xl md:text-2xl font-bold text-white mb-4">Exclusive Offer</h3>
+              <p className="text-gray-300 text-sm md:text-base mb-6">
+                Use code <span className="font-mono bg-slate-700 px-2 py-1 rounded text-amber-400 text-sm md:text-base select-all">{`PREMIUM${selectedAd.id}`}</span> at checkout to redeem this offer.
               </p>
               <div className="flex gap-4">
                 <button
                   onClick={() => setSelectedAd(null)}
-                  className="flex-1 bg-gradient-to-r from-amber-500 to-pink-500 text-white py-3 rounded-xl font-semibold hover:shadow-lg hover:shadow-amber-500/20 transition-all"
+                  className="flex-1 bg-gradient-to-r from-amber-500 to-pink-500 text-white py-2 md:py-3 rounded-xl font-semibold active:bg-amber-600 hover:shadow-lg hover:shadow-amber-500/20 transition-all text-sm md:text-base"
                 >
                   Got it!
                 </button>

@@ -9,7 +9,11 @@ module.exports = {
     extend: {
       backdropBlur: {
         xs: '2px',
-      },
+        sm: '4px',
+        md: '8px',
+        lg: '12px',
+        xl: '20px',
+            },
       animation: {
         'parallax': 'parallax 20s ease-in-out infinite alternate',
         'float': 'float 8s ease-in-out infinite',
