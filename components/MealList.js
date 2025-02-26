@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
-import { Star, Snowflake, Sun, Moon } from 'lucide-react';
+import { Star, Snowflake, Sun } from 'lucide-react';
 import { tsParticles } from 'tsparticles-engine';
 import { loadFull } from 'tsparticles';
 
@@ -107,10 +107,9 @@ const MealList = () => {
   const { scrollYProgress } = useScroll();
   
   // Enhanced scroll-based animations
-  const y = useTransform(scrollYProgress, [0, 0.5, 1], ['0%', '25%', '0%']);
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [1, 1.2, 1]);
-  const opacity = useTransform(scrollYProgress, [0, 0.5, 1], [1, 0.8, 1]);
-  const rotate = useTransform(scrollYProgress, [0, 0.5, 1], [0, 180, 360]);
+  const y = useTransform(scrollYProgress, [0, 0.5, 1], ['0%', '20%', '0%']);
+  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [1, 1.05, 1]);
+  const opacity = useTransform(scrollYProgress, [0, 0.5, 1], [1, 0.85, 1]);
   
   // Particle configuration with dynamic movement
   const particlesInit = async (engine) => {
@@ -156,7 +155,6 @@ const MealList = () => {
   };
 
   useEffect(() => {
-    // Set initial ads data with staggered loading
     const loadAdsWithDelay = async () => {
       setIsLoading(true);
       const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
@@ -209,10 +207,10 @@ const MealList = () => {
     >
       {/* Animated Particles Background */}
       <div id="tsparticles" className="absolute inset-0" />
-
+      
       {/* Enhanced Parallax Hero Section */}
       <motion.section 
-        style={{ y, rotate }}
+        style={{ y }}
         className="relative h-screen flex items-center justify-center overflow-hidden"
       >
         <motion.div
@@ -270,8 +268,8 @@ const MealList = () => {
                   className="w-full h-full object-cover"
                   initial={{ scale: 1 }}
                   whileHover={{ 
-                    scale: 1.2,
-                    transition: { duration: 0.8, ease: "easeOut" }
+                    scale: 1.1,
+                    transition: { duration: 0.5, ease: "easeOut" }
                   }}
                 />
                 <motion.div 
@@ -310,7 +308,7 @@ const MealList = () => {
                   <div className="flex justify-between items-center">
                     <motion.div whileHover={{ scale: 1.1 }}>
                       <span className="line-through text-gray-500">${ad.originalPrice}</span>
-                      <span className={`ml-4 text-2xl ${themes[theme].text}`}>
+                      <span className={`ml-4 text-2xl ${themes[theme].text}`} >
                         ${ad.discountedPrice}
                       </span>
                     </motion.div>
