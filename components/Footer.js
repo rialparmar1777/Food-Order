@@ -23,14 +23,20 @@ const Footer = () => {
 
       {/* Floating Food Icons */}
       <div className="absolute inset-0 overflow-hidden">
-        {[...Array(5)].map((_, i) => (
+        {[
+          { left: '20%', delay: '0s' },
+          { left: '40%', delay: '1s' },
+          { left: '60%', delay: '2s' },
+          { left: '80%', delay: '3s' },
+          { left: '90%', delay: '4s' }
+        ].map((position, i) => (
           <div
             key={i}
             className="absolute animate-float"
             style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              opacity: 0.1
+              left: position.left,
+              animationDelay: position.delay,
+              opacity: '0.1'
             }}
           >
             <MdRestaurantMenu className="text-4xl text-yellow-400" />
