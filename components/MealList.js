@@ -119,7 +119,7 @@ export default function MealList() {
       id: 8,
       title: "Fish & Chips",
       description: "Crispy battered fish with fries",
-      image: "https://images.pexels.com/photos/4194635/pexels-photo-4194635.jpeg",
+      image: "https://images.pexels.com/photos/4977522/pexels-photo-4977522.jpeg",
       originalPrice: 21.99,
       discountedPrice: 16.99,
       discount: 25,
